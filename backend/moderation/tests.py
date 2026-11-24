@@ -3,9 +3,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from groups.models import Group
 from posts.models import Post
 
-from .models import AuditLog, Report
+from .models import AdminNotification, AuditLog, Report, UserActivity
 
 
 class ModerationAndAdminTests(APITestCase):
@@ -119,3 +120,38 @@ class ModerationAndAdminTests(APITestCase):
         self.assertFalse(self.regular_user.is_suspended)
         self.assertTrue(AuditLog.objects.filter(action="user_suspension").exists())
         self.assertTrue(AuditLog.objects.filter(action="user_reactivation").exists())
+
+    def test_user_activities_analytics_and_admin_notifications(self):
+        # Social & group activities generated automatically by signals
+        Post.objects.create(author=self.regular_user, content="Zanzibar sunset")
+        grp = Group.objects.create(name="TZ Devs", creator=self.regular_user)
+
+        self.assertTrue(UserActivity.objects.filter(activity_type="user_registered").exists())
+        self.assertTrue(UserActivity.objects.filter(activity_type="post_created").exists())
+        self.assertTrue(UserActivity.objects.filter(activity_type="group_created").exists())
+        self.assertTrue(AdminNotification.objects.filter(recipient=self.super_admin).exists())
+
+        # Ordinary user cannot access user-activities or analytics
+        self.client.force_authenticate(user=self.regular_user)
+        self.assertEqual(
+            self.client.get(reverse("admin-user-activities")).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+        # Super Admin can view user activities, analytics, posts, and group detail
+        self.client.force_authenticate(user=self.super_admin)
+        res_act = self.client.get(reverse("admin-user-activities"), {"category": "social"})
+        self.assertEqual(res_act.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(res_act.data["count"], 1)
+
+        res_stats = self.client.get(reverse("admin-stats"))
+        self.assertEqual(res_stats.status_code, status.HTTP_200_OK)
+        self.assertIn("total_comments", res_stats.data)
+        self.assertIn("total_likes", res_stats.data)
+
+        res_ana = self.client.get(reverse("admin-analytics"), {"period": "month"})
+        self.assertEqual(res_ana.status_code, status.HTTP_200_OK)
+        self.assertIn("user_growth", res_ana.data)
+
+        res_grp = self.client.get(reverse("admin-group-detail", kwargs={"group_id": grp.id}))
+        self.assertEqual(res_grp.status_code, status.HTTP_200_OK)
