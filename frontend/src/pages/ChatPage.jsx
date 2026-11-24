@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { apiRequest, getAccessToken } from "../api/client";
+import { apiRequest, getAccessToken, wsUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function ChatPage() {
@@ -28,8 +28,7 @@ export default function ChatPage() {
     loadMessages();
 
     const token = getAccessToken();
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${window.location.host}/ws/chat/${id}/?token=${token}`);
+    const ws = new WebSocket(wsUrl(`/ws/chat/${id}/?token=${token}`));
     wsRef.current = ws;
 
     ws.onmessage = (event) => {

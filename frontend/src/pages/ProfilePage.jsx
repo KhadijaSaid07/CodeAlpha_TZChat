@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { apiRequest } from "../api/client";
+import { apiRequest, apiUrl } from "../api/client";
 import FollowButton from "../components/FollowButton";
 import PostCard from "../components/PostCard";
 import UserAvatar from "../components/UserAvatar";
@@ -159,7 +159,7 @@ export default function ProfilePage() {
           style={{
             height: 170,
             background: profile.cover_image_url
-              ? `url(${profile.cover_image_url}) center/cover`
+              ? `url(${apiUrl(profile.cover_image_url)}) center/cover`
               : "linear-gradient(120deg, #1877f2, #60a5fa)",
             position: "relative",
           }}

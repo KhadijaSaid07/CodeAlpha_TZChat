@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAccessToken } from "../api/client";
+import { apiUrl, getAccessToken } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function UserAvatar({
@@ -23,7 +23,7 @@ export default function UserAvatar({
       try {
         const token = getAccessToken();
         const separator = src.includes("?") ? "&" : "?";
-        const res = await fetch(`${src}${separator}v=${avatarVersion}`, {
+        const res = await fetch(apiUrl(`${src}${separator}v=${avatarVersion}`), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: "include",
         });

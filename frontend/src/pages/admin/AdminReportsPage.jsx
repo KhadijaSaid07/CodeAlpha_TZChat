@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { apiRequest, getAccessToken } from "../../api/client";
+import { apiRequest, apiUrl, getAccessToken } from "../../api/client";
 import { useToast } from "../../context/ToastContext";
 
 export default function AdminReportsPage() {
@@ -62,7 +62,7 @@ export default function AdminReportsPage() {
       if (startDate) params.set("start_date", startDate);
       if (endDate) params.set("end_date", endDate);
 
-      const res = await fetch(`/api/admin-api/reports/export-pdf/?${params.toString()}`, {
+      const res = await fetch(apiUrl(`/api/admin-api/reports/export-pdf/?${params.toString()}`), {
         headers: { Authorization: `Bearer ${getAccessToken()}` },
         credentials: "include",
       });

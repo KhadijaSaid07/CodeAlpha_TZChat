@@ -1,5 +1,22 @@
 // Lightweight Fetch API client with automatic JWT refresh via HttpOnly cookie
 
+export const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+
+export function apiUrl(path) {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `${API_BASE}${path}`;
+}
+
+export function wsUrl(path) {
+  if (API_BASE) {
+    const wsBase = API_BASE.replace(/^http/, "ws");
+    return `${wsBase}${path}`;
+  }
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${protocol}://${window.location.host}${path}`;
+}
+
 let accessToken = null;
 
 export function setAccessToken(token) {
@@ -11,7 +28,7 @@ export function getAccessToken() {
 }
 
 async function refreshAccessToken() {
-  const res = await fetch("/api/auth/refresh/", {
+  const res = await fetch(apiUrl("/api/auth/refresh/"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -35,7 +52,7 @@ export async function apiRequest(path, options = {}, retry = true) {
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     ...options,
     headers,
     credentials: "include",
