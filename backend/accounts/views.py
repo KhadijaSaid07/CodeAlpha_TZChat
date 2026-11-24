@@ -33,14 +33,18 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
         value=refresh_token,
         httponly=True,
         secure=not settings.DEBUG,
-        samesite="Lax",
+        samesite="Lax" if settings.DEBUG else "None",
         max_age=7 * 24 * 60 * 60,
         path="/api/auth/",
     )
 
 
 def _clear_refresh_cookie(response: Response) -> None:
-    response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/auth/")
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        path="/api/auth/",
+        samesite="Lax" if settings.DEBUG else "None",
+    )
 
 
 class RegisterView(APIView):

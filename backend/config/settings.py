@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -75,17 +77,23 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# PostgreSQL Database Configuration
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "tzchat_db"),
-        "USER": os.getenv("DB_USER", "tzchat_user"),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "5432"),
+# PostgreSQL Database Configuration (uses Render DATABASE_URL in production, .env locally)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "tzchat_db"),
+            "USER": os.getenv("DB_USER", "tzchat_user"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
+    }
 
 # Channels layer (in-memory for local development)
 CHANNEL_LAYERS = {
