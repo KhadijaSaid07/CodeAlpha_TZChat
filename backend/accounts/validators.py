@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from PIL import Image, UnidentifiedImageError
 
 PHONE_REGEX = re.compile(r"^\+[1-9]\d{6,14}$")
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 
 

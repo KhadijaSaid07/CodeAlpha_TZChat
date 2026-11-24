@@ -2,8 +2,8 @@ import os
 
 from django.core.exceptions import ValidationError
 
-MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
-ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v"}
+MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024  # 100 MB
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v", ".3gp", ".mkv"}
 
 
 def validate_video_file(file_obj) -> None:
