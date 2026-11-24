@@ -23,6 +23,7 @@ export default function HomePage() {
   const [feeling, setFeeling] = useState("");
   const [visibility, setVisibility] = useState("public");
   const [imageFile, setImageFile] = useState(null);
+  const [imageCaption, setImageCaption] = useState("");
   const [videoFile, setVideoFile] = useState(null);
   const [videoCaption, setVideoCaption] = useState("");
   const [posting, setPosting] = useState(false);
@@ -58,7 +59,10 @@ export default function HomePage() {
       formData.append("content", content);
       formData.append("feeling", feeling);
       formData.append("visibility", visibility);
-      if (imageFile) formData.append("image", imageFile);
+      if (imageFile) {
+        formData.append("image", imageFile);
+        formData.append("image_caption", imageCaption);
+      }
       if (videoFile) {
         formData.append("video", videoFile);
         formData.append("video_caption", videoCaption);
@@ -72,6 +76,7 @@ export default function HomePage() {
       setContent("");
       setFeeling("");
       setImageFile(null);
+      setImageCaption("");
       setVideoFile(null);
       setVideoCaption("");
       showToast("Post published!");
@@ -112,9 +117,18 @@ export default function HomePage() {
             </div>
 
             {imageFile && (
-              <div style={{ fontSize: "0.85rem", color: "var(--primary)", marginBottom: 8 }}>
-                📷 Selected image: {imageFile.name}{" "}
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setImageFile(null)}>✕</button>
+              <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--primary)" }}>
+                  📷 Selected image: {imageFile.name}{" "}
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setImageFile(null); setImageCaption(""); }}>✕</button>
+                </div>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="Write an explanation or caption for this picture (optional)"
+                  value={imageCaption}
+                  onChange={(e) => setImageCaption(e.target.value)}
+                />
               </div>
             )}
 
@@ -122,12 +136,12 @@ export default function HomePage() {
               <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
                 <div style={{ fontSize: "0.85rem", color: "var(--primary)" }}>
                   🎥 Selected video: {videoFile.name}{" "}
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setVideoFile(null)}>✕</button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setVideoFile(null); setVideoCaption(""); }}>✕</button>
                 </div>
                 <input
                   className="input"
                   type="text"
-                  placeholder="Video caption (optional)"
+                  placeholder="Write an explanation or caption for this video (optional)"
                   value={videoCaption}
                   onChange={(e) => setVideoCaption(e.target.value)}
                 />

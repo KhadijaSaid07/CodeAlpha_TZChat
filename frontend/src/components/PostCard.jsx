@@ -84,6 +84,7 @@ export default function PostCard({ post, onDeleted }) {
       await apiRequest(`/api/posts/comments/${commentId}/`, { method: "DELETE" });
       setComments((prev) => prev.filter((c) => c.id !== commentId && c.parent !== commentId));
       setCommentsCount((c) => Math.max(0, c - 1));
+      if (replyTarget?.id === commentId) setReplyTarget(null);
       showToast("Comment deleted.");
     } catch (err) {
       showToast(err.message, "error");
@@ -185,6 +186,7 @@ export default function PostCard({ post, onDeleted }) {
             src={apiUrl(vid.video)}
             controls
             playsInline
+            preload="metadata"
             style={{ width: "100%", maxHeight: 420, borderRadius: 10, background: "#000" }}
           />
           {vid.caption && <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: 4 }}>{vid.caption}</p>}
