@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from privacy.models import PrivacySetting
 
-from .models import User, UserProfile
+from .models import ProfileView, User, UserProfile
 from .profile_permissions import can_view_avatar, can_view_profile
 from .serializers import (
     ImageUploadSerializer,
@@ -95,11 +95,48 @@ class UserProfileDetailView(APIView):
                 {"detail": "You do not have permission to view this profile."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        if request.user.pk != target.pk:
+            ProfileView.objects.update_or_create(
+                profile_owner=target,
+                viewer=request.user,
+            )
         profile = _get_or_create_profile(target)
         return Response(
             UserProfileSerializer(profile, context={"request": request}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class MyProfileViewsListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Profiles"],
+        summary="List users who viewed your profile",
+        responses={200: OpenApiResponse(description="List of profile viewers")},
+    )
+    def get(self, request):
+        views = (
+            ProfileView.objects.filter(profile_owner=request.user)
+            .select_related("viewer", "viewer__profile")[:50]
+        )
+        data = [
+            {
+                "id": v.id,
+                "username": v.viewer.username,
+                "full_name": v.viewer.full_name,
+                "profile_picture_url": (
+                    f"/api/profiles/{v.viewer.username}/avatar/"
+                    if getattr(v.viewer, "profile", None)
+                    and v.viewer.profile.profile_picture
+                    and can_view_avatar(request.user, v.viewer)
+                    else None
+                ),
+                "viewed_at": v.viewed_at,
+            }
+            for v in views
+        ]
+        return Response(data)
 
 
 class AvatarManageView(APIView):
