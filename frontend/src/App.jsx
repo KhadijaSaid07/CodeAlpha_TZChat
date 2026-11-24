@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
 import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -33,10 +33,17 @@ function isAdminUser(user) {
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) {
     return <div className="auth-page"><div className="card">Loading TZChat...</div></div>;
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    const next = `${location.pathname}${location.search}`;
+    if (next && next !== "/") {
+      sessionStorage.setItem("tzchat_next", next);
+    }
+    return <Navigate to="/login" state={{ from: next }} replace />;
+  }
   if (isAdminUser(user)) return <Navigate to="/admin/dashboard" replace />;
   return children;
 }
@@ -56,7 +63,13 @@ function PublicOnlyRoute({ children }) {
     return <div className="auth-page"><div className="card">Loading TZChat...</div></div>;
   }
   if (user) {
-    return <Navigate to={isAdminUser(user) ? "/admin/dashboard" : "/home"} replace />;
+    if (isAdminUser(user)) return <Navigate to="/admin/dashboard" replace />;
+    const next = sessionStorage.getItem("tzchat_next");
+    if (next) {
+      sessionStorage.removeItem("tzchat_next");
+      return <Navigate to={next} replace />;
+    }
+    return <Navigate to="/home" replace />;
   }
   return children;
 }

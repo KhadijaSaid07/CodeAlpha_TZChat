@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import PasswordInput from "../components/PasswordInput";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -29,6 +29,8 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const nextUrl = location.state?.from || sessionStorage.getItem("tzchat_next") || "";
   const [countryCode, setCountryCode] = useState("+255");
   const [customCode, setCustomCode] = useState("+");
   const [localPhone, setLocalPhone] = useState("");
@@ -68,7 +70,7 @@ export default function RegisterPage() {
       await register({ ...form, phone_number: fullPhone });
       showToast("Your registration is successful! Please login.");
       navigate("/login", {
-        state: { successMessage: "Your registration is successful! Please login." },
+        state: { successMessage: "Your registration is successful! Please login.", from: nextUrl },
       });
     } catch (err) {
       setError(err.message || "Registration failed.");

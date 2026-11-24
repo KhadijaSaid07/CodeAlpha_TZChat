@@ -10,6 +10,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const regSuccess = location.state?.successMessage || "";
+  const nextUrl = location.state?.from || sessionStorage.getItem("tzchat_next") || "";
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +25,11 @@ export default function LoginPage() {
       const loggedIn = await login(identifier, password);
       showToast("Welcome back to TZChat!");
       if (loggedIn.role === "admin" || loggedIn.role === "super_admin") {
+        sessionStorage.removeItem("tzchat_next");
         navigate("/admin/dashboard");
+      } else if (nextUrl) {
+        sessionStorage.removeItem("tzchat_next");
+        navigate(nextUrl, { replace: true });
       } else {
         navigate("/home");
       }
@@ -44,6 +49,11 @@ export default function LoginPage() {
           Welcome back!
         </p>
 
+        {nextUrl.includes("/groups?join=") && !regSuccess && (
+          <div className="alert alert-success">
+            Please login or create an account to join this group.
+          </div>
+        )}
         {regSuccess && <div className="alert alert-success">{regSuccess}</div>}
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -73,7 +83,7 @@ export default function LoginPage() {
         </form>
 
         <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.9rem", color: "var(--muted)" }}>
-          Don&apos;t have an account? <Link to="/register">Sign up</Link>
+          Don&apos;t have an account? <Link to="/register" state={{ from: nextUrl }}>Sign up</Link>
         </p>
       </div>
     </div>
