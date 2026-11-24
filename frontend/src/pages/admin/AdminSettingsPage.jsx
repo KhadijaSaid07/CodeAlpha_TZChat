@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import PasswordInput from "../../components/PasswordInput";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
@@ -146,8 +147,8 @@ export default function AdminSettingsPage() {
         <div style={{ display: "grid", gap: 14, maxWidth: 460 }}>
           <form onSubmit={changePassword} style={{ display: "grid", gap: 10 }}>
             <h3>Change Password</h3>
-            <input className="input" type="password" placeholder="Current Password" value={pwForm.current_password} onChange={(e) => setPwForm((p) => ({ ...p, current_password: e.target.value }))} required />
-            <input className="input" type="password" placeholder="New Password" value={pwForm.new_password} onChange={(e) => setPwForm((p) => ({ ...p, new_password: e.target.value }))} required />
+            <PasswordInput placeholder="Current Password" value={pwForm.current_password} onChange={(e) => setPwForm((p) => ({ ...p, current_password: e.target.value }))} />
+            <PasswordInput placeholder="New Password" value={pwForm.new_password} onChange={(e) => setPwForm((p) => ({ ...p, new_password: e.target.value }))} autoComplete="new-password" />
             <button type="submit" className="btn btn-primary btn-sm" style={{ width: "fit-content" }}>Update Password</button>
           </form>
           <hr style={{ border: "none", borderTop: "1px solid var(--border)" }} />
