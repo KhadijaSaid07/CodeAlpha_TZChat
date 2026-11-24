@@ -227,8 +227,17 @@ class CommentListCreateView(APIView):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
         serializer = CommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        parent = serializer.validated_data.get("parent")
+        if parent and parent.post_id != post.id:
+            return Response(
+                {"detail": "Parent comment does not belong to this post."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         comment = Comment.objects.create(
-            post=post, author=request.user, content=serializer.validated_data["content"]
+            post=post,
+            author=request.user,
+            parent=parent,
+            content=serializer.validated_data["content"],
         )
         return Response(
             CommentSerializer(comment, context={"request": request}).data,
@@ -316,6 +325,8 @@ class ExploreUsersView(APIView):
         users = User.objects.filter(is_active=True, is_suspended=False).exclude(pk=request.user.pk)
         if query:
             users = users.filter(Q(username__icontains=query) | Q(full_name__icontains=query))
+        else:
+            users = users.order_by("?")
 
         visible_users = [u for u in users.select_related("profile")[:50] if can_view_profile(request.user, u)]
         return Response(PostAuthorSerializer(visible_users, many=True, context={"request": request}).data)
