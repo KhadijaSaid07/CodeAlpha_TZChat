@@ -3,6 +3,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from django.db.models import Q
+
+from follows.models import Follow, Friendship
+
 from .models import User, UserProfile
 from .profile_permissions import can_view_avatar
 from .validators import normalize_phone_number, validate_image_file
@@ -10,6 +14,8 @@ from .validators import normalize_phone_number, validate_image_file
 
 class UserAccountSerializer(serializers.ModelSerializer):
     """Public/current-user safe account representation."""
+
+    profile_picture_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -22,8 +28,15 @@ class UserAccountSerializer(serializers.ModelSerializer):
             "role",
             "is_verified",
             "date_joined",
+            "profile_picture_url",
         )
         read_only_fields = ("id", "role", "is_verified", "date_joined")
+
+    def get_profile_picture_url(self, obj):
+        profile = getattr(obj, "profile", None)
+        if not profile or not profile.profile_picture:
+            return None
+        return f"/api/profiles/{obj.username}/avatar/"
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -144,6 +157,21 @@ class EmailVerifySerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        try:
+            validate_password(attrs["new_password"])
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"new_password": list(exc.messages)})
+        return attrs
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """Profile serializer that respects profile picture privacy."""
 
@@ -155,6 +183,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     profile_picture_visibility = serializers.CharField(
         source="user.privacy_settings.profile_picture_visibility", read_only=True
     )
+    follow_status = serializers.SerializerMethodField()
+    friend_status = serializers.SerializerMethodField()
+    friendship_id = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -167,22 +198,53 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profile_picture_url",
             "cover_image_url",
             "profile_picture_visibility",
+            "follow_status",
+            "friend_status",
+            "friendship_id",
             "updated_at",
         )
+
+    def get_follow_status(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or request.user.pk == obj.user_id:
+            return "none"
+        rel = Follow.objects.filter(follower=request.user, following=obj.user).first()
+        return rel.status if rel else "none"
+
+    def _get_friendship(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or request.user.pk == obj.user_id:
+            return None
+        return Friendship.objects.filter(
+            Q(sender=request.user, receiver=obj.user) | Q(sender=obj.user, receiver=request.user)
+        ).first()
+
+    def get_friend_status(self, obj):
+        request = self.context.get("request")
+        fr = self._get_friendship(obj)
+        if not fr:
+            return "none"
+        if fr.status == Friendship.STATUS_ACCEPTED:
+            return "accepted"
+        if fr.status == Friendship.STATUS_PENDING:
+            return "pending_sent" if fr.sender_id == request.user.pk else "pending_received"
+        return "none"
+
+    def get_friendship_id(self, obj):
+        fr = self._get_friendship(obj)
+        return fr.id if fr else None
 
     def get_profile_picture_url(self, obj):
         request = self.context.get("request")
         viewer = request.user if request else None
         if not obj.profile_picture or not can_view_avatar(viewer, obj.user):
             return None
-        url = f"/api/profiles/{obj.user.username}/avatar/"
-        return request.build_absolute_uri(url) if request else url
+        return f"/api/profiles/{obj.user.username}/avatar/"
 
     def get_cover_image_url(self, obj):
         if not obj.cover_image:
             return None
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.cover_image.url) if request else obj.cover_image.url
+        return obj.cover_image.url
 
 
 class ProfileUpdateSerializer(serializers.Serializer):
