@@ -100,6 +100,24 @@ class ConversationListView(APIView):
         return Response(ConversationSerializer(convs, many=True, context={"request": request}).data)
 
 
+class ConversationDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Messaging"],
+        summary="Get conversation metadata (participants or group name)",
+        responses={200: ConversationSerializer},
+    )
+    def get(self, request, conversation_id):
+        conv = get_object_or_404(Conversation.objects.select_related("group"), pk=conversation_id)
+        if not ConversationMember.objects.filter(conversation=conv, user=request.user).exists():
+            return Response(
+                {"detail": "You are not a participant in this conversation."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response(ConversationSerializer(conv, context={"request": request}).data)
+
+
 class ConversationMessagesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
@@ -142,6 +160,20 @@ class ConversationMessagesView(APIView):
         conv = self._get_member_conversation(request.user, conversation_id)
         if not conv:
             return Response({"detail": "You are not a participant in this conversation."}, status=status.HTTP_403_FORBIDDEN)
+
+        if conv.conversation_type == Conversation.TYPE_GROUP and conv.group and conv.group.only_admins_can_send:
+            from groups.models import GroupMember
+
+            is_admin = GroupMember.objects.filter(
+                group=conv.group,
+                user=request.user,
+                role__in=[GroupMember.ROLE_OWNER, GroupMember.ROLE_ADMIN],
+            ).exists()
+            if not is_admin:
+                return Response(
+                    {"detail": "Only group admins can send messages in this group."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         serializer = SendMessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

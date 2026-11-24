@@ -23,6 +23,9 @@ class Group(models.Model):
         related_name="created_groups",
     )
     invite_code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    only_admins_can_send = models.BooleanField(default=False)
+    only_admins_can_edit_info = models.BooleanField(default=True)
+    allow_member_invites = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

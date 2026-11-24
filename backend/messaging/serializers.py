@@ -80,12 +80,16 @@ class ConversationSerializer(serializers.ModelSerializer):
     participants = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
+    group_id = serializers.IntegerField(source="group.id", read_only=True, default=None)
+    group_name = serializers.CharField(source="group.name", read_only=True, default=None)
 
     class Meta:
         model = Conversation
         fields = (
             "id",
             "conversation_type",
+            "group_id",
+            "group_name",
             "participants",
             "last_message",
             "unread_count",

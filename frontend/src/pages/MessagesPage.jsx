@@ -42,10 +42,10 @@ export default function MessagesPage() {
 
   function getTitle(conv) {
     if (conv.conversation_type === "group") {
-      return `Group Chat #${conv.id}`;
+      return conv.group_name || "Group Chat";
     }
     const other = conv.participants?.find((p) => p.id !== user?.id) || conv.participants?.[0];
-    return other ? `${other.full_name} (@${other.username})` : `Chat #${conv.id}`;
+    return other ? `${other.full_name} (@${other.username})` : "Direct Message";
   }
 
   async function handlePeopleSearch(e) {

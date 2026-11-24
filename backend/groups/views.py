@@ -96,9 +96,18 @@ class GroupDetailView(APIView):
     def patch(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
         membership = _get_membership(group, request.user)
-        if not _is_owner_or_admin(membership):
+        if not membership:
+            return Response({"detail": "You are not a member of this group."}, status=status.HTTP_403_FORBIDDEN)
+        if group.only_admins_can_edit_info and not _is_owner_or_admin(membership):
             return Response(
                 {"detail": "Only group owners and administrators can update group settings."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # Only owner/admin can change permission flags
+        perm_fields = ("only_admins_can_send", "only_admins_can_edit_info", "allow_member_invites")
+        if any(k in request.data for k in perm_fields) and not _is_owner_or_admin(membership):
+            return Response(
+                {"detail": "Only group owners and administrators can change group permissions."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         serializer = GroupCreateUpdateSerializer(group, data=request.data, partial=True)
@@ -131,7 +140,9 @@ class GroupMembersView(APIView):
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
         actor_membership = _get_membership(group, request.user)
-        if not _is_owner_or_admin(actor_membership):
+        if not actor_membership:
+            return Response({"detail": "You are not a member of this group."}, status=status.HTTP_403_FORBIDDEN)
+        if not group.allow_member_invites and not _is_owner_or_admin(actor_membership):
             return Response(
                 {"detail": "Only group owners and administrators can add members."},
                 status=status.HTTP_403_FORBIDDEN,

@@ -35,6 +35,9 @@ class GroupSerializer(serializers.ModelSerializer):
             "group_image",
             "creator",
             "invite_code",
+            "only_admins_can_send",
+            "only_admins_can_edit_info",
+            "allow_member_invites",
             "members_count",
             "conversation_id",
             "created_at",
@@ -50,7 +53,14 @@ class GroupSerializer(serializers.ModelSerializer):
 class GroupCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ("name", "description", "group_image")
+        fields = (
+            "name",
+            "description",
+            "group_image",
+            "only_admins_can_send",
+            "only_admins_can_edit_info",
+            "allow_member_invites",
+        )
 
     def validate_group_image(self, value):
         if value:

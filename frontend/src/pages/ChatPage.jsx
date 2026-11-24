@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest, apiUrl, getAccessToken, wsUrl } from "../api/client";
+import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 
 export default function ChatPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [attachment, setAttachment] = useState(null);
@@ -18,8 +20,12 @@ export default function ChatPage() {
   useEffect(() => {
     async function loadMessages() {
       try {
-        const data = await apiRequest(`/api/messaging/conversations/${id}/messages/`);
-        setMessages(data.results || []);
+        const [convData, msgData] = await Promise.all([
+          apiRequest(`/api/messaging/conversations/${id}/`),
+          apiRequest(`/api/messaging/conversations/${id}/messages/`),
+        ]);
+        setConversation(convData);
+        setMessages(msgData.results || []);
         await apiRequest(`/api/messaging/conversations/${id}/read/`, { method: "POST" });
       } catch (err) {
         setError(err.message);
@@ -100,19 +106,56 @@ export default function ChatPage() {
     }
   }
 
+  const otherUser =
+    conversation?.conversation_type === "direct"
+      ? conversation.participants?.find((p) => p.id !== user?.id) || conversation.participants?.[0]
+      : null;
+
+  const chatTitle =
+    conversation?.conversation_type === "group"
+      ? conversation.group_name || "Group Chat"
+      : otherUser
+      ? otherUser.full_name
+      : "Chat";
+
+  const chatSubtitle =
+    conversation?.conversation_type === "group"
+      ? `${conversation.participants?.length || 0} members`
+      : otherUser
+      ? `@${otherUser.username}`
+      : "";
+
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 140px)", minHeight: 460 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link to="/messages" className="btn btn-ghost btn-sm">← Back</Link>
-          <h3>Conversation #{id}</h3>
+    <div
+      className="card"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100dvh - 140px)",
+        minHeight: 420,
+        maxWidth: "100%",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 10, gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <Link to="/messages" className="btn btn-ghost btn-sm" style={{ flexShrink: 0 }}>←</Link>
+          <UserAvatar src={otherUser?.profile_picture_url} name={chatTitle} size={36} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {chatTitle}
+            </div>
+            {chatSubtitle && (
+              <div style={{ fontSize: "0.78rem", color: "var(--muted)" }}>{chatSubtitle}</div>
+            )}
+          </div>
         </div>
-        {typingUser && <span style={{ fontSize: "0.85rem", color: "var(--primary)" }}>{typingUser}</span>}
+        {typingUser && <span style={{ fontSize: "0.8rem", color: "var(--primary)", flexShrink: 0 }}>{typingUser}</span>}
       </div>
 
       {error && <div className="alert alert-error" style={{ marginTop: 10 }}>{error}</div>}
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 4px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 4px", display: "flex", flexDirection: "column", gap: 10 }}>
         {messages.map((m) => {
           const senderId = m.sender?.id ?? m.sender_id;
           const isMe = senderId === user?.id;
@@ -121,11 +164,13 @@ export default function ChatPage() {
               key={m.id}
               style={{
                 alignSelf: isMe ? "flex-end" : "flex-start",
-                maxWidth: "75%",
+                maxWidth: "82%",
                 background: isMe ? "var(--primary)" : "#e9eef6",
                 color: isMe ? "#fff" : "var(--text)",
                 padding: "10px 14px",
                 borderRadius: 14,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
               }}
             >
               {!isMe && (
@@ -144,14 +189,14 @@ export default function ChatPage() {
                     borderLeft: "3px solid currentColor",
                   }}
                 >
-                  ↩ {messages.find((x) => x.id === m.reply_to)?.content?.slice(0, 60) || `Message #${m.reply_to}`}
+                  ↩ {messages.find((x) => x.id === m.reply_to)?.content?.slice(0, 60) || "Quoted message"}
                 </div>
               )}
               <div>{m.is_deleted ? <em>Message deleted</em> : m.content}</div>
               {m.attachments?.map((att) => (
                 <div key={att.id} style={{ marginTop: 6 }}>
                   {att.file_type === "image" ? (
-                    <img src={apiUrl(att.file)} alt="attachment" style={{ maxWidth: 220, borderRadius: 8 }} />
+                    <img src={apiUrl(att.file)} alt="attachment" style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 8 }} />
                   ) : (
                     <a href={apiUrl(att.file)} target="_blank" rel="noreferrer" style={{ color: isMe ? "#fff" : "var(--primary)" }}>
                       📎 Download file
@@ -192,10 +237,14 @@ export default function ChatPage() {
         </div>
       )}
 
-      <form onSubmit={handleSend} style={{ display: "flex", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-        <label className="btn btn-ghost btn-sm" title="Attach image or file">
+      <form onSubmit={handleSend} style={{ display: "flex", gap: 6, borderTop: "1px solid var(--border)", paddingTop: 10, alignItems: "center" }}>
+        <label className="btn btn-ghost btn-sm" title="Attach image or file" style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px" }}>
           📎
-          <input type="file" hidden onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+          <input
+            type="file"
+            style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+          />
         </label>
         <input
           className="input"
@@ -203,8 +252,9 @@ export default function ChatPage() {
           placeholder="Type a message..."
           value={text}
           onChange={(e) => handleTyping(e.target.value)}
+          style={{ flex: 1, minWidth: 0 }}
         />
-        <button type="submit" className="btn btn-primary btn-sm">Send</button>
+        <button type="submit" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Send</button>
       </form>
     </div>
   );
