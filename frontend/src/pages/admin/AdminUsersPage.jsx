@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import PasswordInput from "../../components/PasswordInput";
 import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -184,7 +185,12 @@ export default function AdminUsersPage() {
             <input className="input" placeholder="Username" value={addForm.username} onChange={(e) => setAddForm((p) => ({ ...p, username: e.target.value }))} required />
             <input className="input" type="email" placeholder="Email" value={addForm.email} onChange={(e) => setAddForm((p) => ({ ...p, email: e.target.value }))} required />
             <input className="input" placeholder="+255712345678" value={addForm.phone_number} onChange={(e) => setAddForm((p) => ({ ...p, phone_number: e.target.value }))} required />
-            <input className="input" type="password" placeholder="Password" value={addForm.password} onChange={(e) => setAddForm((p) => ({ ...p, password: e.target.value }))} required />
+            <PasswordInput
+              placeholder="Password"
+              value={addForm.password}
+              onChange={(e) => setAddForm((p) => ({ ...p, password: e.target.value }))}
+              autoComplete="new-password"
+            />
             {user?.role === "super_admin" && (
               <select className="input" value={addForm.role} onChange={(e) => setAddForm((p) => ({ ...p, role: e.target.value }))}>
                 <option value="user">User</option>
