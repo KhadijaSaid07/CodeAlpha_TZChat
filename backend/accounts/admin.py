@@ -1,13 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, UserProfile
+from .models import ProfileView, User, UserProfile
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "location", "updated_at")
     search_fields = ("user__username", "user__full_name", "location")
+
+
+@admin.register(ProfileView)
+class ProfileViewAdmin(admin.ModelAdmin):
+    list_display = ("id", "profile_owner", "viewer", "viewed_at")
+    search_fields = ("profile_owner__username", "viewer__username")
 
 
 @admin.register(User)
