@@ -111,3 +111,27 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile(@{self.user.username})"
+
+
+class ProfileView(models.Model):
+    """Tracks which users have viewed a user's profile."""
+
+    profile_owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="profile_views_received"
+    )
+    viewer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="profile_views_made"
+    )
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profile_owner", "viewer"],
+                name="unique_profile_viewer",
+            )
+        ]
+        ordering = ["-viewed_at"]
+
+    def __str__(self):
+        return f"@{self.viewer.username} viewed @{self.profile_owner.username}"
