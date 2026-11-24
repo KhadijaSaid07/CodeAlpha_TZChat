@@ -245,4 +245,7 @@ class ProtectedAvatarView(APIView):
         profile = _get_or_create_profile(target)
         if not profile.profile_picture:
             return Response({"detail": "No profile picture set."}, status=status.HTTP_404_NOT_FOUND)
-        return FileResponse(profile.profile_picture.open("rb"))
+        try:
+            return FileResponse(profile.profile_picture.open("rb"))
+        except FileNotFoundError:
+            return Response({"detail": "Profile picture file not found."}, status=status.HTTP_404_NOT_FOUND)
