@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import FollowButton from "../components/FollowButton";
 import PostCard from "../components/PostCard";
@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [profileViews, setProfileViews] = useState([]);
   const [tab, setTab] = useState("posts");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: "", username: "", bio: "", location: "" });
@@ -39,16 +40,18 @@ export default function ProfilePage() {
         location: pData.location || "",
       });
 
-      const [postsRes, flwRes, flwingRes, frRes] = await Promise.all([
+      const [postsRes, flwRes, flwingRes, frRes, viewsRes] = await Promise.all([
         apiRequest(`/api/posts/?username=${encodeURIComponent(pData.username)}`),
         apiRequest(`/api/follows/followers/${encodeURIComponent(pData.username)}/`),
         apiRequest(`/api/follows/following/${encodeURIComponent(pData.username)}/`),
         apiRequest(`/api/friends/user/${encodeURIComponent(pData.username)}/`),
+        isOwn ? apiRequest("/api/profiles/me/views/") : Promise.resolve([]),
       ]);
       setPosts(postsRes.results || []);
       setFollowers(flwRes || []);
       setFollowing(flwingRes || []);
       setFriends(frRes || []);
+      setProfileViews(viewsRes || []);
     } catch (err) {
       setError(err.message);
     }
@@ -230,11 +233,11 @@ export default function ProfilePage() {
             </p>
           )}
 
-          <div style={{ display: "flex", gap: 24, marginTop: 14, fontWeight: 600 }}>
-            <span>{posts.length} Posts</span>
-            <span>{followers.length} Followers</span>
-            <span>{following.length} Following</span>
-            <span>{friends.length} Friends</span>
+          <div style={{ display: "flex", gap: 18, marginTop: 14, fontWeight: 600, flexWrap: "wrap" }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("posts")}>{posts.length} Posts</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("followers")}>{followers.length} Followers</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("following")}>{following.length} Following</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("friends")}>{friends.length} Friends</button>
           </div>
         </div>
       </div>
@@ -274,15 +277,22 @@ export default function ProfilePage() {
         </form>
       )}
 
-      <div className="card" style={{ display: "flex", gap: 10 }}>
-        {["posts", "friends", "about"].map((t) => (
+      <div className="card" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {[
+          { key: "posts", label: "Posts" },
+          { key: "followers", label: `Followers (${followers.length})` },
+          { key: "following", label: `Following (${following.length})` },
+          { key: "friends", label: `Friends (${friends.length})` },
+          ...(isOwn ? [{ key: "views", label: `Profile Views (${profileViews.length})` }] : []),
+          { key: "about", label: "About" },
+        ].map((t) => (
           <button
-            key={t}
+            key={t.key}
             type="button"
-            className={`btn btn-sm ${tab === t ? "btn-primary" : "btn-ghost"}`}
-            onClick={() => setTab(t)}
+            className={`btn btn-sm ${tab === t.key ? "btn-primary" : "btn-ghost"}`}
+            onClick={() => setTab(t.key)}
           >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {t.label}
           </button>
         ))}
       </div>
@@ -297,17 +307,75 @@ export default function ProfilePage() {
         )
       )}
 
+      {tab === "followers" && (
+        <div className="card">
+          <h3 style={{ marginBottom: 10 }}>Followers ({followers.length})</h3>
+          {followers.length === 0 ? (
+            <p style={{ color: "var(--muted)" }}>No followers yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {followers.map((f) => (
+                <Link key={f.id} to={`/profile/${f.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit" }}>
+                  <UserAvatar name={f.full_name} size={36} />
+                  <div><strong>{f.full_name}</strong> <span style={{ color: "var(--muted)" }}>@{f.username}</span></div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "following" && (
+        <div className="card">
+          <h3 style={{ marginBottom: 10 }}>Following ({following.length})</h3>
+          {following.length === 0 ? (
+            <p style={{ color: "var(--muted)" }}>Not following anyone yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {following.map((f) => (
+                <Link key={f.id} to={`/profile/${f.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit" }}>
+                  <UserAvatar name={f.full_name} size={36} />
+                  <div><strong>{f.full_name}</strong> <span style={{ color: "var(--muted)" }}>@{f.username}</span></div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === "friends" && (
         <div className="card">
           <h3 style={{ marginBottom: 10 }}>Friends ({friends.length})</h3>
           {friends.length === 0 ? (
             <p style={{ color: "var(--muted)" }}>No friends yet.</p>
           ) : (
-            <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "grid", gap: 10 }}>
               {friends.map((f) => (
-                <div key={f.id}>
-                  <strong>{f.full_name}</strong> <span style={{ color: "var(--muted)" }}>@{f.username}</span>
-                </div>
+                <Link key={f.id} to={`/profile/${f.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit" }}>
+                  <UserAvatar name={f.full_name} size={36} />
+                  <div><strong>{f.full_name}</strong> <span style={{ color: "var(--muted)" }}>@{f.username}</span></div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "views" && isOwn && (
+        <div className="card">
+          <h3 style={{ marginBottom: 10 }}>Who Viewed Your Profile ({profileViews.length})</h3>
+          {profileViews.length === 0 ? (
+            <p style={{ color: "var(--muted)" }}>No one has viewed your profile yet.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {profileViews.map((v) => (
+                <Link key={v.id} to={`/profile/${v.username}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "inherit", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <UserAvatar src={v.profile_picture_url} name={v.full_name} size={36} />
+                    <div><strong>{v.full_name}</strong> <span style={{ color: "var(--muted)" }}>@{v.username}</span></div>
+                  </div>
+                  <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{new Date(v.viewed_at).toLocaleString()}</span>
+                </Link>
               ))}
             </div>
           )}
