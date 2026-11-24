@@ -52,6 +52,10 @@ export default function HomePage() {
 
   async function handleCreatePost(e) {
     e.preventDefault();
+    if (!content.trim() && !imageFile && !videoFile) {
+      showToast("Please write something or choose a photo/video first.", "error");
+      return;
+    }
     setError("");
     setPosting(true);
     try {
@@ -150,21 +154,21 @@ export default function HomePage() {
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <label className="btn btn-ghost btn-sm">
+                <label className="btn btn-ghost btn-sm" style={{ position: "relative", overflow: "hidden" }}>
                   🖼️ Photo
                   <input
                     type="file"
                     accept="image/*"
-                    hidden
+                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                   />
                 </label>
-                <label className="btn btn-ghost btn-sm">
+                <label className="btn btn-ghost btn-sm" style={{ position: "relative", overflow: "hidden" }}>
                   🎥 Video
                   <input
                     type="file"
                     accept="video/*"
-                    hidden
+                    style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
                     onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
                   />
                 </label>
@@ -191,7 +195,11 @@ export default function HomePage() {
                 </select>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-sm" disabled={posting}>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm"
+                disabled={posting || (!content.trim() && !imageFile && !videoFile)}
+              >
                 {posting ? "Posting..." : "Post"}
               </button>
             </div>
