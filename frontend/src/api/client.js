@@ -1,0 +1,71 @@
+// Lightweight Fetch API client with automatic JWT refresh via HttpOnly cookie
+
+let accessToken = null;
+
+export function setAccessToken(token) {
+  accessToken = token;
+}
+
+export function getAccessToken() {
+  return accessToken;
+}
+
+async function refreshAccessToken() {
+  const res = await fetch("/api/auth/refresh/", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    accessToken = null;
+    return null;
+  }
+  const data = await res.json();
+  accessToken = data.access;
+  return accessToken;
+}
+
+export async function apiRequest(path, options = {}, retry = true) {
+  const headers = new Headers(options.headers || {});
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const res = await fetch(path, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+
+  if (res.status === 401 && retry && !path.includes("/api/auth/login/") && !path.includes("/api/auth/refresh/")) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      return apiRequest(path, options, false);
+    }
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  const data = contentType.includes("application/json") ? await res.json() : null;
+
+  if (!res.ok) {
+    const message =
+      data?.detail ||
+      (data && typeof data === "object"
+        ? Object.entries(data)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+            .join(" | ")
+        : "Request failed");
+    const error = new Error(message);
+    error.status = res.status;
+    error.data = data;
+    throw error;
+  }
+
+  return data;
+}
+
+export { refreshAccessToken };
