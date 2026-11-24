@@ -1,9 +1,11 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Q
 from rest_framework import serializers
 
 from accounts.models import User
 from accounts.profile_permissions import can_view_avatar
 from accounts.validators import validate_image_file
+from follows.models import Follow, Friendship
 
 from .models import Comment, Like, Post, PostImage, PostVideo
 from .validators import validate_video_file
@@ -11,10 +13,52 @@ from .validators import validate_video_file
 
 class PostAuthorSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
+    follow_status = serializers.SerializerMethodField()
+    friend_status = serializers.SerializerMethodField()
+    friendship_id = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("id", "username", "full_name", "is_verified", "profile_picture_url")
+        fields = (
+            "id",
+            "username",
+            "full_name",
+            "is_verified",
+            "profile_picture_url",
+            "follow_status",
+            "friend_status",
+            "friendship_id",
+        )
+
+    def get_follow_status(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or request.user.pk == obj.pk:
+            return "none"
+        rel = Follow.objects.filter(follower=request.user, following=obj).first()
+        return rel.status if rel else "none"
+
+    def _get_friendship(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or request.user.pk == obj.pk:
+            return None
+        return Friendship.objects.filter(
+            Q(sender=request.user, receiver=obj) | Q(sender=obj, receiver=request.user)
+        ).first()
+
+    def get_friend_status(self, obj):
+        request = self.context.get("request")
+        fr = self._get_friendship(obj)
+        if not fr:
+            return "none"
+        if fr.status == Friendship.STATUS_ACCEPTED:
+            return "accepted"
+        if fr.status == Friendship.STATUS_PENDING:
+            return "pending_sent" if fr.sender_id == request.user.pk else "pending_received"
+        return "none"
+
+    def get_friendship_id(self, obj):
+        fr = self._get_friendship(obj)
+        return fr.id if fr else None
 
     def get_profile_picture_url(self, obj):
         request = self.context.get("request")
@@ -22,8 +66,7 @@ class PostAuthorSerializer(serializers.ModelSerializer):
         profile = getattr(obj, "profile", None)
         if not profile or not profile.profile_picture or not can_view_avatar(viewer, obj):
             return None
-        url = f"/api/profiles/{obj.username}/avatar/"
-        return request.build_absolute_uri(url) if request else url
+        return f"/api/profiles/{obj.username}/avatar/"
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -157,7 +200,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ("id", "post", "author", "content", "created_at", "updated_at")
+        fields = ("id", "post", "author", "parent", "content", "created_at", "updated_at")
         read_only_fields = ("id", "post", "author", "created_at", "updated_at")
 
 
