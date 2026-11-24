@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { apiRequest, getAccessToken, wsUrl } from "../api/client";
+import { apiRequest, apiUrl, getAccessToken, wsUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function ChatPage() {
@@ -151,9 +151,9 @@ export default function ChatPage() {
               {m.attachments?.map((att) => (
                 <div key={att.id} style={{ marginTop: 6 }}>
                   {att.file_type === "image" ? (
-                    <img src={att.file} alt="attachment" style={{ maxWidth: 220, borderRadius: 8 }} />
+                    <img src={apiUrl(att.file)} alt="attachment" style={{ maxWidth: 220, borderRadius: 8 }} />
                   ) : (
-                    <a href={att.file} target="_blank" rel="noreferrer" style={{ color: isMe ? "#fff" : "var(--primary)" }}>
+                    <a href={apiUrl(att.file)} target="_blank" rel="noreferrer" style={{ color: isMe ? "#fff" : "var(--primary)" }}>
                       📎 Download file
                     </a>
                   )}

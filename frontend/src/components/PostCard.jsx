@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { apiRequest } from "../api/client";
+import { apiRequest, apiUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import UserAvatar from "./UserAvatar";
@@ -171,7 +171,7 @@ export default function PostCard({ post, onDeleted }) {
       {post.images?.map((img) => (
         <div key={img.id} style={{ marginBottom: 10 }}>
           <img
-            src={img.image}
+            src={apiUrl(img.image)}
             alt={img.caption || "Post attachment"}
             style={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 10 }}
           />
@@ -182,8 +182,9 @@ export default function PostCard({ post, onDeleted }) {
       {post.videos?.map((vid) => (
         <div key={vid.id} style={{ marginBottom: 10 }}>
           <video
-            src={vid.video}
+            src={apiUrl(vid.video)}
             controls
+            playsInline
             style={{ width: "100%", maxHeight: 420, borderRadius: 10, background: "#000" }}
           />
           {vid.caption && <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: 4 }}>{vid.caption}</p>}
@@ -223,54 +224,41 @@ export default function PostCard({ post, onDeleted }) {
             <p style={{ fontSize: "0.88rem", color: "var(--muted)" }}>No comments yet.</p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
-              {topComments.map((c) => (
-                <div key={c.id}>
-                  <div style={{ background: "var(--bg)", padding: "8px 12px", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <strong style={{ fontSize: "0.88rem" }}>@{c.author?.username}</strong>{" "}
-                      <span style={{ fontSize: "0.9rem" }}>{c.content}</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReplyTarget(c)}>
-                        Reply
-                      </button>
-                      {c.author?.id === user?.id && (
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleDeleteComment(c.id)}>
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Nested replies */}
-                  {(repliesByParent[c.id] || []).map((rep) => (
+              {topComments.map((c) => {
+                const renderCommentTree = (item, depth = 0) => (
+                  <div key={item.id} style={{ marginLeft: Math.min(depth, 3) * 20, marginTop: depth > 0 ? 6 : 0 }}>
                     <div
-                      key={rep.id}
                       style={{
-                        marginLeft: 24,
-                        marginTop: 6,
-                        background: "#f8fafc",
-                        borderLeft: "2px solid var(--primary)",
-                        padding: "6px 10px",
-                        borderRadius: 8,
+                        background: depth > 0 ? "#f8fafc" : "var(--bg)",
+                        borderLeft: depth > 0 ? "2px solid var(--primary)" : "none",
+                        padding: "8px 12px",
+                        borderRadius: 10,
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        gap: 8,
                       }}
                     >
                       <div>
-                        <strong style={{ fontSize: "0.84rem" }}>@{rep.author?.username}</strong>{" "}
-                        <span style={{ fontSize: "0.88rem" }}>{rep.content}</span>
+                        <strong style={{ fontSize: "0.86rem" }}>@{item.author?.username}</strong>{" "}
+                        <span style={{ fontSize: "0.9rem" }}>{item.content}</span>
                       </div>
-                      {rep.author?.id === user?.id && (
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleDeleteComment(rep.id)}>
-                          ✕
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReplyTarget(item)}>
+                          Reply
                         </button>
-                      )}
+                        {item.author?.id === user?.id && (
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleDeleteComment(item.id)}>
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {(repliesByParent[item.id] || []).map((child) => renderCommentTree(child, depth + 1))}
+                  </div>
+                );
+                return renderCommentTree(c, 0);
+              })}
             </div>
           )}
         </div>
