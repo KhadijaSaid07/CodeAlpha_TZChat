@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .serializers import (
+    ChangePasswordSerializer,
     EmailVerifySerializer,
     LoginSerializer,
     LogoutSerializer,
@@ -290,3 +291,25 @@ class EmailVerifyView(APIView):
         user.is_verified = True
         user.save(update_fields=["is_verified"])
         return Response({"message": "Account verified successfully."}, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Authentication"],
+        summary="Change current user's password",
+        request=ChangePasswordSerializer,
+        responses={200: OpenApiResponse(description="Password updated successfully")},
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if not request.user.check_password(serializer.validated_data["current_password"]):
+            return Response(
+                {"detail": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        request.user.set_password(serializer.validated_data["new_password"])
+        request.user.save(update_fields=["password"])
+        return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
