@@ -177,13 +177,7 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <div
-        className="shell-body"
-        style={{
-          maxWidth: 1440,
-          gridTemplateColumns: collapsed ? "74px minmax(0, 1fr)" : "250px minmax(0, 1fr)",
-        }}
-      >
+      <div className={`shell-body admin-shell-body ${collapsed ? "admin-collapsed" : ""}`}>
         {/* Collapsible Left Sidebar */}
         <aside className={`admin-sidebar ${mobileOpen ? "admin-sidebar-mobile-open" : ""}`}>
           <div style={{ padding: "4px 8px 10px", fontWeight: 800, color: "#fff", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: 8 }}>

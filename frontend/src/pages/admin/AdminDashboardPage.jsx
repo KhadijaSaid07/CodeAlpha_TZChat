@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
         <div className="card">
           <h3 style={{ marginBottom: 10 }}>Recent User Activities</h3>
           {(stats?.recent_user_activities || []).length === 0 ? (

@@ -599,8 +599,44 @@ select {
 .pill-red { background: #fee2e2; color: #b91c1c; }
 .pill-purple { background: #ede9fe; color: #6d28d9; }
 
+.admin-shell-body {
+  max-width: 1440px;
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+
+.admin-shell-body.admin-collapsed {
+  grid-template-columns: 74px minmax(0, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .admin-shell-body {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
+  .admin-topbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .admin-shell-body,
+  .admin-shell-body.admin-collapsed {
+    grid-template-columns: 1fr;
+  }
+
   .admin-sidebar {
     display: none;
+  }
+
+  .admin-sidebar.admin-sidebar-mobile-open {
+    display: flex;
+    position: fixed;
+    top: 58px;
+    left: 10px;
+    right: 10px;
+    max-height: calc(100dvh - 74px);
+    overflow-y: auto;
+    z-index: 55;
   }
 }
