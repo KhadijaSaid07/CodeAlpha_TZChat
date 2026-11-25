@@ -69,3 +69,35 @@ class NotificationUnreadCountView(APIView):
     def get(self, request):
         count = Notification.objects.filter(recipient=request.user, is_read=False).count()
         return Response({"unread_count": count}, status=status.HTTP_200_OK)
+
+
+class NotificationDeleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Delete/clear a single notification",
+        responses={200: OpenApiResponse(description="Notification cleared")},
+    )
+    def delete(self, request, pk):
+        notif = get_object_or_404(Notification, pk=pk, recipient=request.user)
+        notif.delete()
+        return Response({"message": "Notification cleared."})
+
+
+class NotificationClearView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Notifications"],
+        summary="Clear selected notifications (by ids) or all notifications",
+        responses={200: OpenApiResponse(description="Notifications cleared")},
+    )
+    def post(self, request):
+        ids = request.data.get("ids")
+        qs = Notification.objects.filter(recipient=request.user)
+        if isinstance(ids, list) and len(ids) > 0:
+            deleted, _ = qs.filter(id__in=ids).delete()
+        else:
+            deleted, _ = qs.delete()
+        return Response({"message": f"Cleared {deleted} notification(s).", "cleared_count": deleted})
