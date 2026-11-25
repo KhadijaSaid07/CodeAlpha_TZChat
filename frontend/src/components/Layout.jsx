@@ -175,7 +175,11 @@ export default function Layout() {
       <nav className="bottom-nav">
         <NavLink to="/home"><span>🏠</span><span>Home</span></NavLink>
         <NavLink to="/explore"><span>🔍</span><span>Explore</span></NavLink>
-        <NavLink to="/messages"><span>💬</span><span>Messages</span></NavLink>
+        <NavLink to="/messages">
+          <span>💬</span>
+          <span>Messages</span>
+          {unreadMsgs > 0 && <span className="bottom-nav-dot">{unreadMsgs}</span>}
+        </NavLink>
         <NavLink to="/groups"><span>👥</span><span>Groups</span></NavLink>
         <NavLink to="/profile"><span>👤</span><span>Profile</span></NavLink>
       </nav>

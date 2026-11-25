@@ -121,7 +121,7 @@ export default function RegisterPage() {
             required
           />
 
-          <div style={{ display: "grid", gridTemplateColumns: "155px 1fr", gap: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(115px, 145px) minmax(0, 1fr)", gap: 8 }}>
             <select
               className="input"
               value={countryCode}
