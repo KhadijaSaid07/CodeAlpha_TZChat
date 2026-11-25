@@ -1,3 +1,5 @@
+import uuid
+
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import permissions, status
@@ -66,6 +68,27 @@ class GroupListCreateView(APIView):
         group = serializer.save(creator=request.user)
         Conversation.objects.create(conversation_type=Conversation.TYPE_GROUP, group=group)
         _add_user_to_group(group, request.user, role=GroupMember.ROLE_OWNER)
+
+        raw_members = request.data.get("member_usernames")
+        if hasattr(request.data, "getlist"):
+            member_list = request.data.getlist("member_usernames")
+            if len(member_list) == 1 and isinstance(member_list[0], str) and "," in member_list[0]:
+                member_list = [u.strip() for u in member_list[0].split(",") if u.strip()]
+        elif isinstance(raw_members, list):
+            member_list = [str(u).strip() for u in raw_members if str(u).strip()]
+        elif isinstance(raw_members, str) and raw_members.strip():
+            member_list = [u.strip() for u in raw_members.split(",") if u.strip()]
+        else:
+            member_list = []
+
+        for uname in member_list:
+            clean = uname.lower().lstrip("@")
+            if clean == request.user.username:
+                continue
+            target = User.objects.filter(username=clean, is_active=True, is_suspended=False).first()
+            if target:
+                _add_user_to_group(group, target)
+
         return Response(
             GroupSerializer(group, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -128,12 +151,12 @@ class GroupMembersView(APIView):
         group = get_object_or_404(Group, pk=pk)
         if not _get_membership(group, request.user):
             return Response({"detail": "You are not a member of this group."}, status=status.HTTP_403_FORBIDDEN)
-        members = group.memberships.select_related("user")
-        return Response(GroupMemberSerializer(members, many=True).data)
+        members = group.memberships.select_related("user", "user__profile")
+        return Response(GroupMemberSerializer(members, many=True, context={"request": request}).data)
 
     @extend_schema(
         tags=["Groups"],
-        summary="Add a member to the group (Owner or Admin only)",
+        summary="Add one or multiple members to the group",
         request=AddGroupMemberSerializer,
         responses={201: GroupMemberSerializer, 403: OpenApiResponse(description="Forbidden")},
     )
@@ -147,6 +170,25 @@ class GroupMembersView(APIView):
                 {"detail": "Only group owners and administrators can add members."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # Support batch multi-select add: {"usernames": ["alice", "bob"]}
+        usernames = request.data.get("usernames")
+        if isinstance(usernames, list) and usernames:
+            added = []
+            for raw in usernames:
+                clean = str(raw).strip().lower().lstrip("@")
+                if not clean:
+                    continue
+                target = User.objects.filter(username=clean, is_active=True, is_suspended=False).first()
+                if target:
+                    membership, created = _add_user_to_group(group, target)
+                    if created:
+                        added.append(membership)
+            return Response(
+                GroupMemberSerializer(added, many=True, context={"request": request}).data,
+                status=status.HTTP_201_CREATED,
+            )
+
         serializer = AddGroupMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         target = get_object_or_404(
@@ -158,7 +200,10 @@ class GroupMembersView(APIView):
         membership, created = _add_user_to_group(group, target)
         if not created:
             return Response({"detail": "User is already a group member."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(GroupMemberSerializer(membership).data, status=status.HTTP_201_CREATED)
+        return Response(
+            GroupMemberSerializer(membership, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class GroupMemberRemoveView(APIView):
@@ -299,6 +344,28 @@ class GroupInviteLinkView(APIView):
         group = get_object_or_404(Group, pk=pk)
         if not _get_membership(group, request.user):
             return Response({"detail": "You are not a member of this group."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(
+            {
+                "invite_code": str(group.invite_code),
+                "invite_path": f"/api/groups/join/{group.invite_code}/",
+            }
+        )
+
+    @extend_schema(
+        tags=["Groups"],
+        summary="Revoke and regenerate group invite link (Owner or Admin only)",
+        responses={200: OpenApiResponse(description="New invite code and path")},
+    )
+    def post(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        membership = _get_membership(group, request.user)
+        if not _is_owner_or_admin(membership):
+            return Response(
+                {"detail": "Only group owners and administrators can reset the invite link."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        group.invite_code = uuid.uuid4()
+        group.save(update_fields=["invite_code", "updated_at"])
         return Response(
             {
                 "invite_code": str(group.invite_code),

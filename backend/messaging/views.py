@@ -94,8 +94,10 @@ class ConversationListView(APIView):
     def get(self, request):
         convs = (
             Conversation.objects.filter(members__user=request.user)
+            .select_related("group")
             .prefetch_related("members__user__profile", "messages")
             .distinct()
+            .order_by("-updated_at")
         )
         return Response(ConversationSerializer(convs, many=True, context={"request": request}).data)
 

@@ -82,6 +82,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     unread_count = serializers.SerializerMethodField()
     group_id = serializers.IntegerField(source="group.id", read_only=True, default=None)
     group_name = serializers.CharField(source="group.name", read_only=True, default=None)
+    group_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -90,12 +91,20 @@ class ConversationSerializer(serializers.ModelSerializer):
             "conversation_type",
             "group_id",
             "group_name",
+            "group_image",
             "participants",
             "last_message",
             "unread_count",
             "created_at",
             "updated_at",
         )
+
+    def get_group_image(self, obj):
+        if not obj.group or not obj.group.group_image:
+            return None
+        request = self.context.get("request")
+        url = obj.group.group_image.url
+        return request.build_absolute_uri(url) if request else url
 
     def get_participants(self, obj):
         users = [m.user for m in obj.members.select_related("user", "user__profile")]

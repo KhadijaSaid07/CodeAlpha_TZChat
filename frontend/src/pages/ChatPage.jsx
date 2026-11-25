@@ -130,71 +130,115 @@ export default function ChatPage() {
     : "Chat";
 
   const chatSubtitle = isGroup
-    ? `${groupInfo?.members_count ?? conversation?.participants?.length ?? 0} members${groupInfo?.description ? ` · ${groupInfo.description}` : ""}`
+    ? `${groupInfo?.members_count ?? conversation?.participants?.length ?? 0} participants`
     : otherUser
     ? `@${otherUser.username}`
     : "";
 
+  const groupImgSrc = groupInfo?.group_image || conversation?.group_image;
+
   return (
     <div
-      className="card"
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "calc(100dvh - 140px)",
-        minHeight: 420,
+        height: "calc(100dvh - 130px)",
+        minHeight: 440,
         maxWidth: "100%",
+        borderRadius: 16,
         overflow: "hidden",
+        border: "1px solid var(--border)",
+        background: "var(--card)",
+        boxShadow: "var(--shadow)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 10, gap: 8 }}>
+      {/* Royal Blue Top App Bar (matches WhatsApp/mockup style) */}
+      <div
+        style={{
+          background: "#1565f5",
+          color: "#fff",
+          padding: "10px 14px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
         <div
-          style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, cursor: isGroup ? "pointer" : "default" }}
+          style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, cursor: isGroup ? "pointer" : "default", flex: 1 }}
           onClick={() => isGroup && groupInfo && setShowGroupPanel((v) => !v)}
         >
           <Link
             to="/messages"
-            className="btn btn-ghost btn-sm"
-            style={{ flexShrink: 0 }}
+            style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 700, padding: "4px 6px", flexShrink: 0 }}
             onClick={(e) => e.stopPropagation()}
+            title="Back to Messages"
           >
             ←
           </Link>
-          <UserAvatar src={otherUser?.profile_picture_url} name={chatTitle} size={36} />
+          {isGroup ? (
+            groupImgSrc ? (
+              <img
+                src={apiUrl(groupImgSrc)}
+                alt={chatTitle}
+                style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.4)", flexShrink: 0 }}
+              />
+            ) : (
+              <div
+                className="avatar-circle"
+                style={{ width: 38, height: 38, background: "rgba(255,255,255,0.22)", color: "#fff", flexShrink: 0 }}
+              >
+                {chatTitle.charAt(0).toUpperCase()}
+              </div>
+            )
+          ) : (
+            <UserAvatar src={otherUser?.profile_picture_url} name={chatTitle} size={38} />
+          )}
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontWeight: 700, fontSize: "0.96rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {chatTitle}
             </div>
-            {chatSubtitle && (
-              <div style={{ fontSize: "0.78rem", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {chatSubtitle}
-              </div>
-            )}
+            <div style={{ fontSize: "0.76rem", opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {typingUser || chatSubtitle}
+            </div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          {typingUser && <span style={{ fontSize: "0.8rem", color: "var(--primary)" }}>{typingUser}</span>}
-          {isGroup && groupInfo && (
-            <button
-              type="button"
-              className={`btn btn-sm ${showGroupPanel ? "btn-primary" : "btn-outline"}`}
-              onClick={() => setShowGroupPanel((v) => !v)}
-            >
-              ⚙️ {showGroupPanel ? "Back to Chat" : "Group Info"}
-            </button>
-          )}
-        </div>
+
+        {isGroup && groupInfo && (
+          <button
+            type="button"
+            onClick={() => setShowGroupPanel((v) => !v)}
+            style={{
+              background: showGroupPanel ? "#fff" : "rgba(255,255,255,0.2)",
+              color: showGroupPanel ? "#1565f5" : "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: 20,
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {showGroupPanel ? "Chat" : "ℹ️ Info"}
+          </button>
+        )}
       </div>
 
-      {error && <div className="alert alert-error" style={{ marginTop: 10 }}>{error}</div>}
+      {error && (
+        <div className="alert alert-error" style={{ margin: "8px 12px 0" }}>
+          {error}
+        </div>
+      )}
 
       {showGroupPanel && groupInfo ? (
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px 4px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: 12, background: "var(--bg)" }}>
           <GroupManagePanel
             group={groupInfo}
             onGroupUpdated={(updated) => {
               setGroupInfo(updated);
-              setConversation((prev) => (prev ? { ...prev, group_name: updated.name } : prev));
+              setConversation((prev) =>
+                prev ? { ...prev, group_name: updated.name, group_image: updated.group_image } : prev
+              );
             }}
             onLeftGroup={() => navigate("/groups")}
             onClose={() => setShowGroupPanel(false)}
@@ -202,67 +246,136 @@ export default function ChatPage() {
         </div>
       ) : (
         <>
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 4px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "14px 12px",
+              background: "#f1f5f9",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {messages.length === 0 && (
+              <div style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.86rem", marginTop: 24 }}>
+                No messages yet. Say hello!
+              </div>
+            )}
             {messages.map((m) => {
               const senderId = m.sender?.id ?? m.sender_id;
               const isMe = senderId === user?.id;
+              const quoted = m.reply_to ? messages.find((x) => x.id === m.reply_to) : null;
               return (
                 <div
                   key={m.id}
                   style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: 8,
                     alignSelf: isMe ? "flex-end" : "flex-start",
-                    maxWidth: "82%",
-                    background: isMe ? "var(--primary)" : "#e9eef6",
-                    color: isMe ? "#fff" : "var(--text)",
-                    padding: "10px 14px",
-                    borderRadius: 14,
-                    overflowWrap: "anywhere",
-                    wordBreak: "break-word",
+                    maxWidth: "84%",
                   }}
                 >
-                  {!isMe && (
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: 2 }}>
-                      @{m.sender?.username || m.sender_username}
-                    </div>
+                  {!isMe && isGroup && (
+                    <UserAvatar
+                      src={m.sender?.profile_picture_url}
+                      name={m.sender?.full_name || m.sender?.username || "U"}
+                      size={28}
+                    />
                   )}
-                  {m.reply_to && (
+                  <div
+                    style={{
+                      background: isMe ? "#1565f5" : "#ffffff",
+                      color: isMe ? "#fff" : "var(--text)",
+                      padding: "9px 13px",
+                      borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                      boxShadow: "0 1px 2px rgba(15,23,42,0.08)",
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
+                      minWidth: 90,
+                    }}
+                  >
+                    {!isMe && isGroup && (
+                      <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1565f5", marginBottom: 3 }}>
+                        {m.sender?.full_name || `@${m.sender?.username || m.sender_username}`}
+                      </div>
+                    )}
+                    {m.reply_to && (
+                      <div
+                        style={{
+                          fontSize: "0.76rem",
+                          padding: "5px 8px",
+                          marginBottom: 6,
+                          borderRadius: 8,
+                          background: isMe ? "rgba(255,255,255,0.2)" : "#f1f5f9",
+                          borderLeft: `3px solid ${isMe ? "#fff" : "#1565f5"}`,
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: "0.72rem" }}>
+                          {quoted?.sender?.full_name || "Quoted message"}
+                        </div>
+                        <div style={{ opacity: 0.9 }}>{quoted?.content?.slice(0, 70) || "Attachment"}</div>
+                      </div>
+                    )}
+                    <div style={{ fontSize: "0.93rem", lineHeight: 1.4 }}>
+                      {m.is_deleted ? <em>Message deleted</em> : m.content}
+                    </div>
+                    {m.attachments?.map((att) => (
+                      <div key={att.id} style={{ marginTop: 6 }}>
+                        {att.file_type === "image" ? (
+                          <img
+                            src={apiUrl(att.file)}
+                            alt="attachment"
+                            style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
+                          />
+                        ) : (
+                          <a
+                            href={apiUrl(att.file)}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: isMe ? "#fff" : "#1565f5", textDecoration: "underline" }}
+                          >
+                            📎 Download file
+                          </a>
+                        )}
+                      </div>
+                    ))}
                     <div
                       style={{
-                        fontSize: "0.76rem",
-                        padding: "4px 8px",
-                        marginBottom: 6,
-                        borderRadius: 6,
-                        background: isMe ? "rgba(255,255,255,0.18)" : "rgba(15,23,42,0.07)",
-                        borderLeft: "3px solid currentColor",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 10,
+                        fontSize: "0.7rem",
+                        opacity: 0.8,
+                        marginTop: 4,
                       }}
                     >
-                      ↩ {messages.find((x) => x.id === m.reply_to)?.content?.slice(0, 60) || "Quoted message"}
-                    </div>
-                  )}
-                  <div>{m.is_deleted ? <em>Message deleted</em> : m.content}</div>
-                  {m.attachments?.map((att) => (
-                    <div key={att.id} style={{ marginTop: 6 }}>
-                      {att.file_type === "image" ? (
-                        <img src={apiUrl(att.file)} alt="attachment" style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 8 }} />
-                      ) : (
-                        <a href={apiUrl(att.file)} target="_blank" rel="noreferrer" style={{ color: isMe ? "#fff" : "var(--primary)" }}>
-                          📎 Download file
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: "0.72rem", opacity: 0.85, marginTop: 4 }}>
-                    <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                    <span style={{ display: "flex", gap: 6 }}>
-                      <button type="button" onClick={() => setReplyTo(m)} style={{ background: "none", border: "none", color: "inherit", fontSize: "0.72rem" }}>
-                        Reply
-                      </button>
-                      {isMe && !m.is_deleted && (
-                        <button type="button" onClick={() => handleDeleteMessage(m.id)} style={{ background: "none", border: "none", color: "inherit", fontSize: "0.72rem" }}>
-                          Delete
+                      <span>
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {isMe && (m.status === "read" ? " ✓✓" : " ✓")}
+                      </span>
+                      <span style={{ display: "flex", gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={() => setReplyTo(m)}
+                          style={{ background: "none", border: "none", color: "inherit", fontSize: "0.7rem" }}
+                        >
+                          Reply
                         </button>
-                      )}
-                    </span>
+                        {isMe && !m.is_deleted && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(m.id)}
+                            style={{ background: "none", border: "none", color: "inherit", fontSize: "0.7rem" }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -271,21 +384,35 @@ export default function ChatPage() {
           </div>
 
           {replyTo && (
-            <div style={{ fontSize: "0.82rem", color: "var(--muted)", padding: "4px 8px", background: "var(--bg)", borderRadius: 8, marginBottom: 6 }}>
-              Replying to: {replyTo.content?.slice(0, 50)}{" "}
-              <button type="button" onClick={() => setReplyTo(null)} style={{ border: "none", background: "none", color: "var(--danger)" }}>✕</button>
+            <div style={{ fontSize: "0.8rem", color: "var(--muted)", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>↩ Replying to <strong>{replyTo.sender?.full_name || "message"}</strong>: {replyTo.content?.slice(0, 50)}</span>
+              <button type="button" onClick={() => setReplyTo(null)} style={{ border: "none", background: "none", color: "var(--danger)", fontWeight: 700 }}>✕</button>
             </div>
           )}
 
           {attachment && (
-            <div style={{ fontSize: "0.82rem", color: "var(--primary)", marginBottom: 6 }}>
-              📎 {attachment.name}{" "}
-              <button type="button" onClick={() => setAttachment(null)} style={{ border: "none", background: "none" }}>✕</button>
+            <div style={{ fontSize: "0.8rem", color: "#1565f5", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>📎 {attachment.name}</span>
+              <button type="button" onClick={() => setAttachment(null)} style={{ border: "none", background: "none", color: "var(--danger)", fontWeight: 700 }}>✕</button>
             </div>
           )}
 
-          <form onSubmit={handleSend} style={{ display: "flex", gap: 6, borderTop: "1px solid var(--border)", paddingTop: 10, alignItems: "center" }}>
-            <label className="btn btn-ghost btn-sm" title="Attach image or file" style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px" }}>
+          <form
+            onSubmit={handleSend}
+            style={{
+              display: "flex",
+              gap: 8,
+              borderTop: "1px solid var(--border)",
+              padding: "10px 12px",
+              alignItems: "center",
+              background: "var(--card)",
+            }}
+          >
+            <label
+              className="btn btn-ghost btn-sm"
+              title="Attach image or file"
+              style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px", borderRadius: 20 }}
+            >
               📎
               <input
                 type="file"
@@ -296,12 +423,18 @@ export default function ChatPage() {
             <input
               className="input"
               type="text"
-              placeholder="Type a message..."
+              placeholder="Message"
               value={text}
               onChange={(e) => handleTyping(e.target.value)}
-              style={{ flex: 1, minWidth: 0 }}
+              style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "9px 14px" }}
             />
-            <button type="submit" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>Send</button>
+            <button
+              type="submit"
+              className="btn btn-primary btn-sm"
+              style={{ flexShrink: 0, borderRadius: 24, padding: "9px 16px", background: "#1565f5" }}
+            >
+              Send
+            </button>
           </form>
         </>
       )}

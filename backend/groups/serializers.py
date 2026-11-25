@@ -2,15 +2,27 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from accounts.models import User
+from accounts.profile_permissions import can_view_avatar
 from accounts.validators import validate_image_file
 
 from .models import Group, GroupMember
 
 
 class GroupMemberUserSerializer(serializers.ModelSerializer):
+    profile_picture_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ("id", "username", "full_name", "is_verified")
+        fields = ("id", "username", "full_name", "is_verified", "profile_picture_url")
+
+    def get_profile_picture_url(self, obj):
+        request = self.context.get("request")
+        viewer = request.user if request else None
+        profile = getattr(obj, "profile", None)
+        if not profile or not profile.profile_picture or not can_view_avatar(viewer, obj):
+            return None
+        url = f"/api/profiles/{obj.username}/avatar/"
+        return request.build_absolute_uri(url) if request else url
 
 
 class GroupMemberSerializer(serializers.ModelSerializer):
