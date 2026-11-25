@@ -77,7 +77,18 @@ export default function MessagesPage() {
     const last = conv.last_message;
     if (!last) return "No messages yet";
     if (last.is_deleted) return "Message deleted";
-    const body = last.content || (last.attachments?.length ? "📎 Attachment" : "");
+    const attType = last.attachments?.[0]?.file_type;
+    const attLabel =
+      attType === "audio"
+        ? "🎤 Voice message"
+        : attType === "image"
+        ? "📷 Photo"
+        : attType === "video"
+        ? "🎬 Video"
+        : last.attachments?.length
+        ? "📎 Attachment"
+        : "";
+    const body = last.content || attLabel;
     if (conv.conversation_type === "group" && last.sender) {
       const senderLabel = last.sender.id === user?.id ? "You" : last.sender.full_name?.split(" ")[0] || last.sender.username;
       return `${senderLabel}: ${body}`;

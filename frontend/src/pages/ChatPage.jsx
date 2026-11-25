@@ -5,6 +5,12 @@ import GroupManagePanel from "../components/GroupManagePanel";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 
+function formatDuration(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export default function ChatPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,6 +24,17 @@ export default function ChatPage() {
   const [replyTo, setReplyTo] = useState(null);
   const [typingUser, setTypingUser] = useState("");
   const [error, setError] = useState("");
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [voiceFile, setVoiceFile] = useState(null);
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordTimerRef = useRef(null);
+
   const wsRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -62,12 +79,101 @@ export default function ChatPage() {
 
     return () => {
       ws.close();
+      stopTracks();
     };
   }, [id, user?.username]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  function stopTracks() {
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+  }
+
+  function clearVoicePreview() {
+    if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
+    setVoicePreviewUrl(null);
+    setVoiceFile(null);
+  }
+
+  async function startRecording() {
+    setError("");
+    clearVoicePreview();
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setError("Voice recording is not supported in this browser. You can still attach an audio file with 📎.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const mimeCandidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ];
+      const chosenMime = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+      const recorder = chosenMime
+        ? new MediaRecorder(stream, { mimeType: chosenMime })
+        : new MediaRecorder(stream);
+
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) audioChunksRef.current.push(ev.data);
+      };
+      recorder.onstop = () => {
+        stopTracks();
+        if (audioChunksRef.current.length === 0) return;
+        const mimeType = recorder.mimeType || chosenMime || "audio/webm";
+        const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: mimeType });
+        setVoiceFile(file);
+        setVoicePreviewUrl(URL.createObjectURL(blob));
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => {
+        setRecordSeconds((s) => s + 1);
+      }, 1000);
+    } catch {
+      stopTracks();
+      setError("Microphone permission was denied. Please allow microphone access to record voice messages.");
+    }
+  }
+
+  function stopRecording() {
+    setIsRecording(false);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    } else {
+      stopTracks();
+    }
+  }
+
+  function cancelRecording() {
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.onstop = () => stopTracks();
+      mediaRecorderRef.current.stop();
+    } else {
+      stopTracks();
+    }
+    setRecordSeconds(0);
+  }
 
   function handleTyping(val) {
     setText(val);
@@ -78,16 +184,24 @@ export default function ChatPage() {
 
   async function handleSend(e) {
     e.preventDefault();
-    if (!text.trim() && !attachment) return;
+    const activeAttachment = voiceFile || attachment;
+    if (!text.trim() && !activeAttachment) return;
     setError("");
 
     try {
       const formData = new FormData();
       formData.append("content", text.trim());
       if (replyTo) formData.append("reply_to", replyTo.id);
-      if (attachment) {
-        formData.append("attachment", attachment);
-        formData.append("file_type", attachment.type.startsWith("image/") ? "image" : "file");
+      if (activeAttachment) {
+        formData.append("attachment", activeAttachment);
+        const fType = voiceFile || activeAttachment.type.startsWith("audio/")
+          ? "audio"
+          : activeAttachment.type.startsWith("image/")
+          ? "image"
+          : activeAttachment.type.startsWith("video/")
+          ? "video"
+          : "file";
+        formData.append("file_type", fType);
       }
 
       const created = await apiRequest(`/api/messaging/conversations/${id}/messages/`, {
@@ -97,6 +211,7 @@ export default function ChatPage() {
       setMessages((prev) => (prev.some((m) => m.id === created.id) ? prev : [...prev, created]));
       setText("");
       setAttachment(null);
+      clearVoicePreview();
       setReplyTo(null);
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: "typing", is_typing: false }));
@@ -152,7 +267,7 @@ export default function ChatPage() {
         boxShadow: "var(--shadow)",
       }}
     >
-      {/* Royal Blue Top App Bar (matches WhatsApp/mockup style) */}
+      {/* Royal Blue Top App Bar */}
       <div
         style={{
           background: "#1565f5",
@@ -319,29 +434,47 @@ export default function ChatPage() {
                         <div style={{ opacity: 0.9 }}>{quoted?.content?.slice(0, 70) || "Attachment"}</div>
                       </div>
                     )}
-                    <div style={{ fontSize: "0.93rem", lineHeight: 1.4 }}>
-                      {m.is_deleted ? <em>Message deleted</em> : m.content}
-                    </div>
-                    {m.attachments?.map((att) => (
-                      <div key={att.id} style={{ marginTop: 6 }}>
-                        {att.file_type === "image" ? (
-                          <img
-                            src={apiUrl(att.file)}
-                            alt="attachment"
-                            style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
-                          />
-                        ) : (
-                          <a
-                            href={apiUrl(att.file)}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ color: isMe ? "#fff" : "#1565f5", textDecoration: "underline" }}
-                          >
-                            📎 Download file
-                          </a>
-                        )}
+                    {(m.is_deleted || m.content) && (
+                      <div style={{ fontSize: "0.93rem", lineHeight: 1.4 }}>
+                        {m.is_deleted ? <em>Message deleted</em> : m.content}
                       </div>
-                    ))}
+                    )}
+                    {!m.is_deleted &&
+                      m.attachments?.map((att) => (
+                        <div key={att.id} style={{ marginTop: 6 }}>
+                          {att.file_type === "image" ? (
+                            <img
+                              src={apiUrl(att.file)}
+                              alt="attachment"
+                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
+                            />
+                          ) : att.file_type === "audio" ? (
+                            <audio
+                              controls
+                              preload="metadata"
+                              src={apiUrl(att.file)}
+                              style={{ maxWidth: "100%", width: 240, height: 36 }}
+                            />
+                          ) : att.file_type === "video" ? (
+                            <video
+                              controls
+                              playsInline
+                              preload="metadata"
+                              src={apiUrl(att.file)}
+                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
+                            />
+                          ) : (
+                            <a
+                              href={apiUrl(att.file)}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: isMe ? "#fff" : "#1565f5", textDecoration: "underline" }}
+                            >
+                              📎 Download file
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     <div
                       style={{
                         display: "flex",
@@ -385,57 +518,126 @@ export default function ChatPage() {
 
           {replyTo && (
             <div style={{ fontSize: "0.8rem", color: "var(--muted)", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>↩ Replying to <strong>{replyTo.sender?.full_name || "message"}</strong>: {replyTo.content?.slice(0, 50)}</span>
+              <span>↩ Replying to <strong>{replyTo.sender?.full_name || "message"}</strong>: {replyTo.content?.slice(0, 50) || "Attachment"}</span>
               <button type="button" onClick={() => setReplyTo(null)} style={{ border: "none", background: "none", color: "var(--danger)", fontWeight: 700 }}>✕</button>
             </div>
           )}
 
-          {attachment && (
+          {attachment && !voiceFile && (
             <div style={{ fontSize: "0.8rem", color: "#1565f5", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>📎 {attachment.name}</span>
               <button type="button" onClick={() => setAttachment(null)} style={{ border: "none", background: "none", color: "var(--danger)", fontWeight: 700 }}>✕</button>
             </div>
           )}
 
-          <form
-            onSubmit={handleSend}
-            style={{
-              display: "flex",
-              gap: 8,
-              borderTop: "1px solid var(--border)",
-              padding: "10px 12px",
-              alignItems: "center",
-              background: "var(--card)",
-            }}
-          >
-            <label
-              className="btn btn-ghost btn-sm"
-              title="Attach image or file"
-              style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px", borderRadius: 20 }}
+          {/* Voice Note Preview before Sending */}
+          {voicePreviewUrl && !isRecording && (
+            <div style={{ padding: "8px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1565f5" }}>🎤 Voice note ready:</span>
+              <audio controls src={voicePreviewUrl} style={{ height: 34, flex: 1, minWidth: 180 }} />
+              <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }} onClick={clearVoicePreview}>
+                ✕ Discard
+              </button>
+            </div>
+          )}
+
+          {/* Live Recording Bar OR Standard Message Input Bar */}
+          {isRecording ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 10,
+                borderTop: "1px solid var(--border)",
+                padding: "10px 14px",
+                background: "#fef2f2",
+              }}
             >
-              📎
+              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#dc2626", fontWeight: 700, fontSize: "0.9rem" }}>
+                <span>🔴 Recording</span>
+                <span>{formatDuration(recordSeconds)}</span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={cancelRecording}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  style={{ background: "#1565f5", borderRadius: 20 }}
+                  onClick={stopRecording}
+                >
+                  ⏹ Done
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleSend}
+              style={{
+                display: "flex",
+                gap: 8,
+                borderTop: "1px solid var(--border)",
+                padding: "10px 12px",
+                alignItems: "center",
+                background: "var(--card)",
+              }}
+            >
+              <label
+                className="btn btn-ghost btn-sm"
+                title="Attach image, audio, video, or file"
+                style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px", borderRadius: 20 }}
+              >
+                📎
+                <input
+                  type="file"
+                  style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
+                  onChange={(e) => {
+                    clearVoicePreview();
+                    setAttachment(e.target.files?.[0] || null);
+                  }}
+                />
+              </label>
               <input
-                type="file"
-                style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
-                onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                className="input"
+                type="text"
+                placeholder={voiceFile ? "Optional caption for voice note..." : "Message"}
+                value={text}
+                onChange={(e) => handleTyping(e.target.value)}
+                style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "9px 14px" }}
               />
-            </label>
-            <input
-              className="input"
-              type="text"
-              placeholder="Message"
-              value={text}
-              onChange={(e) => handleTyping(e.target.value)}
-              style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "9px 14px" }}
-            />
-            <button
-              type="submit"
-              className="btn btn-primary btn-sm"
-              style={{ flexShrink: 0, borderRadius: 24, padding: "9px 16px", background: "#1565f5" }}
-            >
-              Send
-            </button>
-          </form>
+              {text.trim() || attachment || voiceFile ? (
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm"
+                  style={{ flexShrink: 0, borderRadius: 24, padding: "9px 16px", background: "#1565f5" }}
+                >
+                  Send
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  title="Record voice message"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "#1565f5",
+                    color: "#fff",
+                    border: "none",
+                    fontSize: "1.1rem",
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  🎤
+                </button>
+              )}
+            </form>
+          )}
         </>
       )}
     </div>

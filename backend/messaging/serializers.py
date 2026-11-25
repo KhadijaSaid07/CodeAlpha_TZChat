@@ -62,7 +62,7 @@ class SendMessageSerializer(serializers.Serializer):
     reply_to = serializers.IntegerField(required=False, allow_null=True)
     attachment = serializers.FileField(required=False)
     file_type = serializers.ChoiceField(
-        choices=["image", "video", "file"], required=False, default="image"
+        choices=["image", "video", "audio", "file"], required=False, default="image"
     )
 
     def validate(self, attrs):

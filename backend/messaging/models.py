@@ -114,10 +114,12 @@ class MessageAttachment(models.Model):
 
     TYPE_IMAGE = "image"
     TYPE_VIDEO = "video"
+    TYPE_AUDIO = "audio"
     TYPE_FILE = "file"
     TYPE_CHOICES = [
         (TYPE_IMAGE, "Image"),
         (TYPE_VIDEO, "Video"),
+        (TYPE_AUDIO, "Audio"),
         (TYPE_FILE, "File"),
     ]
 
