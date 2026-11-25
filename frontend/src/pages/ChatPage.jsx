@@ -253,20 +253,7 @@ export default function ChatPage() {
   const groupImgSrc = groupInfo?.group_image || conversation?.group_image;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100dvh - 130px)",
-        minHeight: 440,
-        maxWidth: "100%",
-        borderRadius: 16,
-        overflow: "hidden",
-        border: "1px solid var(--border)",
-        background: "var(--card)",
-        boxShadow: "var(--shadow)",
-      }}
-    >
+    <div className="chat-shell">
       {/* Royal Blue Top App Bar */}
       <div
         style={{
