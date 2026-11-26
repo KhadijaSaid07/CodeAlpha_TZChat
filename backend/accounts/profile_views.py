@@ -1,4 +1,6 @@
-from django.http import FileResponse
+import urllib.request
+
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import permissions, status
@@ -245,6 +247,14 @@ class ProtectedAvatarView(APIView):
         profile = _get_or_create_profile(target)
         if not profile.profile_picture:
             return Response({"detail": "No profile picture set."}, status=status.HTTP_404_NOT_FOUND)
+        pic_url = profile.profile_picture.url
+        if pic_url.startswith(("http://", "https://")):
+            try:
+                with urllib.request.urlopen(pic_url, timeout=15) as remote:
+                    content_type = remote.headers.get("Content-Type", "image/jpeg")
+                    return HttpResponse(remote.read(), content_type=content_type)
+            except Exception:
+                return Response({"detail": "Profile picture file not found."}, status=status.HTTP_404_NOT_FOUND)
         try:
             return FileResponse(profile.profile_picture.open("rb"))
         except FileNotFoundError:

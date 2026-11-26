@@ -122,6 +122,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Permanent Cloud Media Storage (Cloudinary) in production when CLOUDINARY_URL is set
+if os.getenv("CLOUDINARY_URL"):
+    STORAGES = {
+        "default": {
+            "BACKEND": "config.cloudinary_storage.CloudinaryMediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 EMAIL_BACKEND = os.getenv(
