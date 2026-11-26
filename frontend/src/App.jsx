@@ -25,6 +25,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 import SettingsPage from "./pages/SettingsPage";
+import TermsPage from "./pages/TermsPage";
 import WelcomePage from "./pages/WelcomePage";
 
 function isAdminUser(user) {
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
             <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/terms" element={<TermsPage />} />
 
             {/* User Dashboard Routes */}
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

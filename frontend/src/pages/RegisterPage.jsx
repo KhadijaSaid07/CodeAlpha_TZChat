@@ -170,7 +170,18 @@ export default function RegisterPage() {
 
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--muted)" }}>
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            <span>I agree to the Terms &amp; Conditions</span>
+            <span>
+              I agree to the{" "}
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ fontWeight: 600, textDecoration: "underline" }}
+              >
+                Terms &amp; Services
+              </Link>
+            </span>
           </label>
 
           <button type="submit" className="btn btn-primary" disabled={submitting}>
