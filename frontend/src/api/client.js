@@ -1,6 +1,20 @@
 // Lightweight Fetch API client with automatic JWT refresh via HttpOnly cookie
 
-export const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+function normalizeApiBase(raw) {
+  let base = (raw || "").trim().replace(/\/+$/, "");
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    base.startsWith("http://") &&
+    !base.includes("localhost") &&
+    !base.includes("127.0.0.1")
+  ) {
+    base = base.replace(/^http:\/\//, "https://");
+  }
+  return base;
+}
+
+export const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
 export function apiUrl(path) {
   if (!path) return "";
@@ -28,19 +42,24 @@ export function getAccessToken() {
 }
 
 async function refreshAccessToken() {
-  const res = await fetch(apiUrl("/api/auth/refresh/"), {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
-  });
-  if (!res.ok) {
+  try {
+    const res = await fetch(apiUrl("/api/auth/refresh/"), {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      accessToken = null;
+      return null;
+    }
+    const data = await res.json();
+    accessToken = data.access;
+    return accessToken;
+  } catch {
     accessToken = null;
     return null;
   }
-  const data = await res.json();
-  accessToken = data.access;
-  return accessToken;
 }
 
 export async function apiRequest(path, options = {}, retry = true) {
@@ -66,7 +85,14 @@ export async function apiRequest(path, options = {}, retry = true) {
   }
 
   const contentType = res.headers.get("content-type") || "";
-  const data = contentType.includes("application/json") ? await res.json() : null;
+  let data = null;
+  if (contentType.includes("application/json")) {
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+  }
 
   if (!res.ok) {
     const message =
