@@ -1,15 +1,19 @@
 import { Link } from "react-router-dom";
+import TZLogo from "../components/TZLogo";
 
 export default function TermsPage() {
   return (
     <div className="auth-page" style={{ alignItems: "flex-start", paddingTop: 32, paddingBottom: 32 }}>
-      <div className="auth-card" style={{ maxWidth: 680, display: "grid", gap: 16 }}>
+      <div className="auth-card" style={{ maxWidth: 700, display: "grid", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <div>
-            <h1 style={{ fontSize: "1.5rem", margin: 0 }}>TZChat Terms &amp; Services</h1>
-            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 4 }}>
-              Effective Date: November 2026 · TZChat (Connect. Chat. Share.)
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <TZLogo size={38} />
+            <div>
+              <h1 style={{ fontSize: "1.45rem", margin: 0 }}>TZChat Terms of Service</h1>
+              <p style={{ color: "var(--muted)", fontSize: "0.84rem", marginTop: 2 }}>
+                Effective Date: November 2026 · TZChat (Connect. Chat. Share.)
+              </p>
+            </div>
           </div>
           <Link to="/register" className="btn btn-outline btn-sm">
             ← Back to Register
@@ -60,9 +64,12 @@ export default function TermsPage() {
           </p>
         </section>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+          <Link to="/privacy" style={{ fontSize: "0.88rem", fontWeight: 600 }}>
+            Read Privacy Policy →
+          </Link>
           <Link to="/register" className="btn btn-primary btn-sm">
-            I Understand — Return to Sign Up
+            I Understand - Return to Sign Up
           </Link>
         </div>
       </div>
