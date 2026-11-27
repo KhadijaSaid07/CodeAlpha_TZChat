@@ -210,13 +210,19 @@ export default function ChatPage() {
       if (replyTo) formData.append("reply_to", replyTo.id);
       if (activeAttachment) {
         formData.append("attachment", activeAttachment);
-        const fType = voiceFile || activeAttachment.type.startsWith("audio/")
-          ? "audio"
-          : activeAttachment.type.startsWith("image/")
-          ? "image"
-          : activeAttachment.type.startsWith("video/")
-          ? "video"
-          : "file";
+        const fname = (activeAttachment.name || "").toLowerCase();
+        const fType =
+          voiceFile ||
+          activeAttachment.type.startsWith("audio/") ||
+          /\.(mp3|wav|m4a|ogg|aac)$/.test(fname)
+            ? "audio"
+            : activeAttachment.type.startsWith("image/") ||
+              /\.(jpg|jpeg|png|gif|webp|bmp)$/.test(fname)
+            ? "image"
+            : activeAttachment.type.startsWith("video/") ||
+              /\.(mp4|mov|webm|m4v|3gp|mkv)$/.test(fname)
+            ? "video"
+            : "file";
         formData.append("file_type", fType);
       }
 
@@ -445,42 +451,96 @@ export default function ChatPage() {
                       </div>
                     )}
                     {!m.is_deleted &&
-                      m.attachments?.map((att) => (
-                        <div key={att.id} style={{ marginTop: 6 }}>
-                          {att.file_type === "image" ? (
-                            <img
-                              src={apiUrl(att.file)}
-                              alt="attachment"
-                              onClick={() => setLightboxUrl(apiUrl(att.file))}
-                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10, cursor: "zoom-in" }}
-                            />
-                          ) : att.file_type === "audio" ? (
-                            <audio
-                              controls
-                              preload="metadata"
-                              src={apiUrl(att.file)}
-                              style={{ maxWidth: "100%", width: 240, height: 36 }}
-                            />
-                          ) : att.file_type === "video" ? (
-                            <video
-                              controls
-                              playsInline
-                              preload="metadata"
-                              src={apiUrl(att.file)}
-                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
-                            />
-                          ) : (
-                            <a
-                              href={apiUrl(att.file)}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ color: isMe ? "#fff" : "var(--primary)", textDecoration: "underline" }}
-                            >
-                              📎 Download file
-                            </a>
-                          )}
-                        </div>
-                      ))}
+                      m.attachments?.map((att) => {
+                        const fileUrl = apiUrl(att.file);
+                        const isImg =
+                          att.file_type === "image" ||
+                          /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(fileUrl);
+                        const isVid =
+                          att.file_type === "video" ||
+                          /\.(mp4|mov|webm|m4v)(\?|$)/i.test(fileUrl);
+                        const isAud = att.file_type === "audio";
+
+                        return (
+                          <div key={att.id} style={{ marginTop: 6, display: "grid", gap: 4 }}>
+                            {isImg ? (
+                              <>
+                                <img
+                                  src={fileUrl}
+                                  alt="attachment"
+                                  onClick={() => setLightboxUrl(fileUrl)}
+                                  style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10, cursor: "zoom-in" }}
+                                />
+                                <div style={{ display: "flex", gap: 10, fontSize: "0.74rem" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setLightboxUrl(fileUrl)}
+                                    style={{ background: "none", border: "none", color: isMe ? "#e0e7ff" : "var(--primary)", fontWeight: 600 }}
+                                  >
+                                    🔍 View
+                                  </button>
+                                  <a
+                                    href={fileUrl}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ color: isMe ? "#e0e7ff" : "var(--primary)", fontWeight: 600 }}
+                                  >
+                                    ⬇ Download
+                                  </a>
+                                </div>
+                              </>
+                            ) : isAud ? (
+                              <>
+                                <audio
+                                  controls
+                                  preload="metadata"
+                                  src={fileUrl}
+                                  style={{ maxWidth: "100%", width: 240, height: 36 }}
+                                />
+                                <a
+                                  href={fileUrl}
+                                  download
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ fontSize: "0.72rem", color: isMe ? "#e0e7ff" : "var(--primary)" }}
+                                >
+                                  ⬇ Download audio
+                                </a>
+                              </>
+                            ) : isVid ? (
+                              <>
+                                <video
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  src={fileUrl}
+                                  style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10, background: "#000" }}
+                                />
+                                <a
+                                  href={fileUrl}
+                                  download
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ fontSize: "0.74rem", color: isMe ? "#e0e7ff" : "var(--primary)", fontWeight: 600 }}
+                                >
+                                  ⬇ Download video
+                                </a>
+                              </>
+                            ) : (
+                              <a
+                                href={fileUrl}
+                                download
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: isMe ? "#fff" : "var(--primary)", textDecoration: "underline", fontWeight: 600 }}
+                              >
+                                ⬇ Download file
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
                     <div
                       style={{
                         display: "flex",
@@ -488,13 +548,26 @@ export default function ChatPage() {
                         alignItems: "center",
                         gap: 10,
                         fontSize: "0.7rem",
-                        opacity: 0.8,
+                        opacity: 0.9,
                         marginTop: 4,
                       }}
                     >
-                      <span>
-                        {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        {isMe && (m.status === "read" ? " ✓✓" : " ✓")}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        {isMe && (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: m.status === "read" ? "#7dd3fc" : "rgba(255,255,255,0.78)",
+                            }}
+                          >
+                            {m.status === "read"
+                              ? "✓✓ Seen"
+                              : m.status === "delivered"
+                              ? "✓✓ Delivered"
+                              : "✓ Sent"}
+                          </span>
+                        )}
                       </span>
                       <span style={{ display: "flex", gap: 6 }}>
                         <button
