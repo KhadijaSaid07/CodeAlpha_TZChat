@@ -24,6 +24,7 @@ from .views import (
     AdminUserDetailManageView,
     AdminUserListView,
     AuditLogListView,
+    PublicContactMessageView,
     SuperAdminAdminsListView,
     SuperAdminManageRoleView,
     SuperAdminSystemSettingsView,
@@ -34,6 +35,7 @@ from .views import (
 urlpatterns = [
     path("login/", AdminLoginView.as_view(), name="admin-login"),
     path("logout/", AdminLogoutView.as_view(), name="admin-logout"),
+    path("contact/", PublicContactMessageView.as_view(), name="public-contact"),
     path("stats/", AdminStatsView.as_view(), name="admin-stats"),
     path("analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
     path("users/", AdminUserListView.as_view(), name="admin-users"),
