@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiRequest, apiUrl, getAccessToken, wsUrl } from "../api/client";
 import GroupManagePanel from "../components/GroupManagePanel";
+import { MicIcon, PaperclipIcon, SendIcon } from "../components/NavIcons";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
 
@@ -257,7 +258,7 @@ export default function ChatPage() {
       {/* Royal Blue Top App Bar */}
       <div
         style={{
-          background: "#1565f5",
+          background: "var(--primary)",
           color: "#fff",
           padding: "10px 14px",
           display: "flex",
@@ -312,7 +313,7 @@ export default function ChatPage() {
             onClick={() => setShowGroupPanel((v) => !v)}
             style={{
               background: showGroupPanel ? "#fff" : "rgba(255,255,255,0.2)",
-              color: showGroupPanel ? "#1565f5" : "#fff",
+              color: showGroupPanel ? "var(--primary)" : "#fff",
               border: "none",
               padding: "6px 12px",
               borderRadius: 20,
@@ -389,7 +390,7 @@ export default function ChatPage() {
                   )}
                   <div
                     style={{
-                      background: isMe ? "#1565f5" : "#ffffff",
+                      background: isMe ? "var(--primary)" : "#ffffff",
                       color: isMe ? "#fff" : "var(--text)",
                       padding: "9px 13px",
                       borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
@@ -400,7 +401,7 @@ export default function ChatPage() {
                     }}
                   >
                     {!isMe && isGroup && (
-                      <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1565f5", marginBottom: 3 }}>
+                      <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--primary)", marginBottom: 3 }}>
                         {m.sender?.full_name || `@${m.sender?.username || m.sender_username}`}
                       </div>
                     )}
@@ -412,7 +413,7 @@ export default function ChatPage() {
                           marginBottom: 6,
                           borderRadius: 8,
                           background: isMe ? "rgba(255,255,255,0.2)" : "#f1f5f9",
-                          borderLeft: `3px solid ${isMe ? "#fff" : "#1565f5"}`,
+                          borderLeft: `3px solid ${isMe ? "#fff" : "var(--primary)"}`,
                         }}
                       >
                         <div style={{ fontWeight: 700, fontSize: "0.72rem" }}>
@@ -455,7 +456,7 @@ export default function ChatPage() {
                               href={apiUrl(att.file)}
                               target="_blank"
                               rel="noreferrer"
-                              style={{ color: isMe ? "#fff" : "#1565f5", textDecoration: "underline" }}
+                              style={{ color: isMe ? "#fff" : "var(--primary)", textDecoration: "underline" }}
                             >
                               📎 Download file
                             </a>
@@ -511,7 +512,7 @@ export default function ChatPage() {
           )}
 
           {attachment && !voiceFile && (
-            <div style={{ fontSize: "0.8rem", color: "#1565f5", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: "0.8rem", color: "var(--primary)", padding: "6px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>📎 {attachment.name}</span>
               <button type="button" onClick={() => setAttachment(null)} style={{ border: "none", background: "none", color: "var(--danger)", fontWeight: 700 }}>✕</button>
             </div>
@@ -520,7 +521,7 @@ export default function ChatPage() {
           {/* Voice Note Preview before Sending */}
           {voicePreviewUrl && !isRecording && (
             <div style={{ padding: "8px 12px", background: "#eef2ff", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1565f5" }}>🎤 Voice note ready:</span>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--primary)" }}>🎤 Voice note ready:</span>
               <audio controls src={voicePreviewUrl} style={{ height: 34, flex: 1, minWidth: 180 }} />
               <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }} onClick={clearVoicePreview}>
                 ✕ Discard
@@ -552,7 +553,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  style={{ background: "#1565f5", borderRadius: 20 }}
+                  style={{ background: "var(--primary)", borderRadius: 20 }}
                   onClick={stopRecording}
                 >
                   ⏹ Done
@@ -572,11 +573,10 @@ export default function ChatPage() {
               }}
             >
               <label
-                className="btn btn-ghost btn-sm"
+                className="chat-attach-btn"
                 title="Attach image, audio, video, or file"
-                style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "8px 10px", borderRadius: 20 }}
               >
-                📎
+                <PaperclipIcon />
                 <input
                   type="file"
                   style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
@@ -592,35 +592,26 @@ export default function ChatPage() {
                 placeholder={voiceFile ? "Optional caption for voice note..." : "Message"}
                 value={text}
                 onChange={(e) => handleTyping(e.target.value)}
-                style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "9px 14px" }}
+                style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "10px 16px" }}
               />
               {text.trim() || attachment || voiceFile ? (
                 <button
                   type="submit"
-                  className="btn btn-primary btn-sm"
-                  style={{ flexShrink: 0, borderRadius: 24, padding: "9px 16px", background: "#1565f5" }}
+                  className="chat-mic-btn"
+                  title="Send message"
+                  aria-label="Send message"
                 >
-                  Send
+                  <SendIcon />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={startRecording}
+                  className="chat-mic-btn"
                   title="Record voice message"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: "#1565f5",
-                    color: "#fff",
-                    border: "none",
-                    fontSize: "1.1rem",
-                    display: "grid",
-                    placeItems: "center",
-                    flexShrink: 0,
-                  }}
+                  aria-label="Record voice message"
                 >
-                  🎤
+                  <MicIcon />
                 </button>
               )}
             </form>
