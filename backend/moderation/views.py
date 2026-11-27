@@ -900,6 +900,49 @@ class AdminNotificationMarkAllReadView(APIView):
         return Response({"message": f"Marked {updated} notifications as read."})
 
 
+class PublicContactMessageView(APIView):
+    """Public landing-page contact form that notifies all active Admins & Super Admins."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=["Administration"],
+        summary="Submit a contact message from the landing page (notifies admins)",
+        responses={201: OpenApiResponse(description="Message sent to administrators")},
+    )
+    def post(self, request):
+        email = (request.data.get("email") or "").strip()
+        contact = (request.data.get("contact") or request.data.get("phone") or "").strip()
+        description = (request.data.get("description") or request.data.get("message") or "").strip()
+
+        if not email or "@" not in email:
+            return Response({"detail": "Please enter a valid email address."}, status=status.HTTP_400_BAD_REQUEST)
+        if not description:
+            return Response({"detail": "Please write your message or description."}, status=status.HTTP_400_BAD_REQUEST)
+
+        contact_part = f" ({contact})" if contact else ""
+        full_msg = f"Contact from {email}{contact_part}: {description}"[:255]
+
+        admins = User.objects.filter(
+            role__in=[User.ROLE_ADMIN, User.ROLE_SUPER_ADMIN],
+            is_active=True,
+        )
+        AdminNotification.objects.bulk_create(
+            [
+                AdminNotification(
+                    recipient=admin_user,
+                    notification_type=AdminNotification.TYPE_SYSTEM,
+                    message=full_msg,
+                )
+                for admin_user in admins
+            ]
+        )
+        return Response(
+            {"message": "Thank you! Your message has been sent to the TZChat team."},
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class AdminChangePasswordView(APIView):
     permission_classes = [IsAdminOrSuperAdmin]
 
