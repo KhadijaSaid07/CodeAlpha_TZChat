@@ -108,14 +108,19 @@ export default function ProfilePage() {
   }
 
   async function handleAction(url, method = "POST", successText = "Action completed.", bodyData = null) {
+    setError("");
+    setStatusMsg("");
     try {
-      await apiRequest(url, {
+      const res = await apiRequest(url, {
         method,
         ...(bodyData ? { body: JSON.stringify(bodyData) } : {}),
       });
-      showToast(successText);
+      const msg = res?.message || successText;
+      setStatusMsg(msg);
+      showToast(msg);
       loadProfile();
     } catch (err) {
+      setError(err.message);
       showToast(err.message, "error");
     }
   }
@@ -199,8 +204,13 @@ export default function ProfilePage() {
             ) : (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <FollowButton username={targetUsername} initialStatus={profile.follow_status} onChanged={loadProfile} />
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => handleAction(`/api/friends/request/${targetUsername}/`, "POST", "Friend request sent!")}>
-                  Add Friend
+                <button
+                  type="button"
+                  className={`btn btn-sm ${profile.is_friend ? "btn-primary" : "btn-outline"}`}
+                  disabled={Boolean(profile.is_friend)}
+                  onClick={() => handleAction(`/api/friends/request/${targetUsername}/`, "POST", `Friend request sent to @${targetUsername}!`)}
+                >
+                  {profile.is_friend ? "✓ Friends" : "Add Friend"}
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={handleStartChat}>
                   Message
