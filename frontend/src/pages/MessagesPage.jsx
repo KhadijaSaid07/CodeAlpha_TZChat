@@ -309,6 +309,8 @@ export default function MessagesPage() {
               : null;
             const timeLabel = formatShortTime(c.last_message?.created_at || c.updated_at);
 
+            const isUnread = (c.unread_count || 0) > 0;
+
             return (
               <Link
                 key={c.id}
@@ -318,11 +320,12 @@ export default function MessagesPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   gap: 12,
-                  padding: "12px",
-                  borderRadius: 12,
-                  border: "1px solid var(--border)",
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: isUnread ? "1.5px solid #c7c9f8" : "1px solid var(--border)",
                   color: "inherit",
-                  background: "var(--card)",
+                  background: isUnread ? "#f3f1ff" : "var(--card)",
+                  boxShadow: isUnread ? "0 4px 12px rgba(79, 70, 229, 0.08)" : "none",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
@@ -366,7 +369,16 @@ export default function MessagesPage() {
                       <span style={{ fontSize: "0.75rem", color: "var(--muted)", flexShrink: 0 }}>{timeLabel}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
-                      <div style={{ fontSize: "0.84rem", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <div
+                        style={{
+                          fontSize: "0.84rem",
+                          color: isUnread ? "var(--text)" : "var(--muted)",
+                          fontWeight: isUnread ? 600 : 400,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
                         {getLastMessagePreview(c)}
                       </div>
                       {c.unread_count > 0 && <span className="badge-count">{c.unread_count}</span>}
