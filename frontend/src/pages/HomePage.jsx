@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import FollowButton from "../components/FollowButton";
+import { ImageIcon, VideoIcon } from "../components/NavIcons";
 import PostCard from "../components/PostCard";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../context/AuthContext";
@@ -152,10 +153,11 @@ export default function HomePage() {
               </div>
             )}
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <label className="btn btn-ghost btn-sm" style={{ position: "relative", overflow: "hidden" }}>
-                  🖼️ Photo
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                <label className="composer-pill" style={{ position: "relative", overflow: "hidden" }}>
+                  <ImageIcon />
+                  <span>Photo</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -163,8 +165,9 @@ export default function HomePage() {
                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                   />
                 </label>
-                <label className="btn btn-ghost btn-sm" style={{ position: "relative", overflow: "hidden" }}>
-                  🎥 Video
+                <label className="composer-pill" style={{ position: "relative", overflow: "hidden" }}>
+                  <VideoIcon />
+                  <span>Video</span>
                   <input
                     type="file"
                     accept="video/*"
@@ -174,33 +177,34 @@ export default function HomePage() {
                 </label>
                 <select
                   className="input"
-                  style={{ width: "auto", padding: "6px 10px" }}
+                  style={{ width: "auto", padding: "6px 10px", fontSize: "0.84rem", borderRadius: 999 }}
                   value={feeling}
                   onChange={(e) => setFeeling(e.target.value)}
                 >
-                  <option value="">😊 Feeling</option>
+                  <option value="">Feeling</option>
                   {FEELINGS.filter(Boolean).map((f) => (
                     <option key={f} value={f}>{f}</option>
                   ))}
                 </select>
                 <select
                   className="input"
-                  style={{ width: "auto", padding: "6px 10px" }}
+                  style={{ width: "auto", padding: "6px 10px", fontSize: "0.84rem", borderRadius: 999 }}
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value)}
                 >
-                  <option value="public">🌍 Public</option>
-                  <option value="friends">👥 Friends</option>
-                  <option value="private">🔒 Private</option>
+                  <option value="public">Public</option>
+                  <option value="friends">Friends</option>
+                  <option value="private">Private</option>
                 </select>
               </div>
 
               <button
                 type="submit"
                 className="btn btn-primary btn-sm"
+                style={{ borderRadius: 999, padding: "8px 18px" }}
                 disabled={posting || (!content.trim() && !imageFile && !videoFile)}
               >
-                {posting ? "Posting..." : "Post"}
+                {posting ? "Posting..." : "Publish"}
               </button>
             </div>
           </form>
