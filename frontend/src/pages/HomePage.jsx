@@ -14,6 +14,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [posts, setPosts] = useState([]);
+  const [postFilter, setPostFilter] = useState("all");
   const [suggested, setSuggested] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,21 +213,60 @@ export default function HomePage() {
 
         {error && <div className="alert alert-error">{error}</div>}
 
+        {/* Post Type Filter Bar (All / Text / Photos / Videos) */}
+        <div className="card" style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "10px 14px", marginBottom: 14 }}>
+          {[
+            { key: "all", label: `All (${posts.length})` },
+            {
+              key: "text",
+              label: `Text (${posts.filter((p) => !p.images?.length && !p.videos?.length).length})`,
+            },
+            {
+              key: "image",
+              label: `Photos (${posts.filter((p) => p.images?.length > 0).length})`,
+            },
+            {
+              key: "video",
+              label: `Videos (${posts.filter((p) => p.videos?.length > 0).length})`,
+            },
+          ].map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`btn btn-sm ${postFilter === f.key ? "btn-primary" : "btn-ghost"}`}
+              style={{ borderRadius: 999 }}
+              onClick={() => setPostFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="card">Loading feed...</div>
-        ) : posts.length === 0 ? (
-          <div className="card" style={{ textAlign: "center", color: "var(--muted)" }}>
-            No posts yet. Share your first post or follow people in Explore!
-          </div>
-        ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-            />
-          ))
-        )}
+        ) : (() => {
+          const visiblePosts = posts.filter((p) => {
+            if (postFilter === "text") return !p.images?.length && !p.videos?.length;
+            if (postFilter === "image") return (p.images?.length || 0) > 0;
+            if (postFilter === "video") return (p.videos?.length || 0) > 0;
+            return true;
+          });
+          return visiblePosts.length === 0 ? (
+            <div className="card" style={{ textAlign: "center", color: "var(--muted)" }}>
+              {postFilter === "all"
+                ? "No posts yet. Share your first post or follow people in Explore!"
+                : `No ${postFilter} posts yet.`}
+            </div>
+          ) : (
+            visiblePosts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+              />
+            ))
+          );
+        })()}
       </div>
 
       {/* Right Sidebar */}
