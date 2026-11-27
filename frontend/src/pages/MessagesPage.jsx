@@ -330,7 +330,7 @@ export default function MessagesPage() {
                         style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                       />
                     ) : (
-                      <div className="avatar-circle" style={{ width: 44, height: 44, background: "#1565f5", color: "#fff" }}>
+                      <div className="avatar-circle" style={{ width: 44, height: 44, background: "var(--primary)", color: "#fff" }}>
                         {title.charAt(0).toUpperCase()}
                       </div>
                     )
