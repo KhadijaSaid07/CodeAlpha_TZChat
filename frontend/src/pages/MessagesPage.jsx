@@ -158,7 +158,10 @@ export default function MessagesPage() {
     }
   }
 
+  const unreadTotalCount = conversations.filter((c) => (c.unread_count || 0) > 0).length;
+
   const filteredConvs = conversations.filter((c) => {
+    if (tab === "unread" && !(c.unread_count > 0)) return false;
     if (tab === "dm" && c.conversation_type !== "direct") return false;
     if (tab === "groups" && c.conversation_type !== "group") return false;
     if (search.trim()) {
@@ -240,7 +243,8 @@ export default function MessagesPage() {
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {[
-          { key: "all", label: "All" },
+          { key: "all", label: `All (${conversations.length})` },
+          { key: "unread", label: `Unread (${unreadTotalCount})` },
           { key: "dm", label: "Private" },
           { key: "groups", label: "Groups" },
           { key: "requests", label: `Requests (${incomingReqs.length})` },
@@ -335,7 +339,24 @@ export default function MessagesPage() {
                       </div>
                     )
                   ) : (
-                    <UserAvatar src={other?.profile_picture_url} name={title} size={44} />
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <UserAvatar src={other?.profile_picture_url} name={title} size={44} />
+                      {other?.is_online && (
+                        <span
+                          title="Active now"
+                          style={{
+                            position: "absolute",
+                            right: 1,
+                            bottom: 1,
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            background: "#10b981",
+                            border: "2px solid #ffffff",
+                          }}
+                        />
+                      )}
+                    </div>
                   )}
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>

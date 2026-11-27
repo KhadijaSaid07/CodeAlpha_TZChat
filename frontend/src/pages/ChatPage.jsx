@@ -24,6 +24,7 @@ export default function ChatPage() {
   const [attachment, setAttachment] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [typingUser, setTypingUser] = useState("");
+  const [lightboxUrl, setLightboxUrl] = useState(null);
   const [error, setError] = useState("");
 
   // Voice recording state
@@ -56,11 +57,24 @@ export default function ChatPage() {
             .catch(() => {});
         }
         await apiRequest(`/api/messaging/conversations/${id}/read/`, { method: "POST" });
+        window.dispatchEvent(new Event("user-notif-updated"));
       } catch (err) {
         setError(err.message);
       }
     }
     loadMessages();
+
+    // Background 5-second sync fallback so messages & read receipts stay reliable even if WS closes
+    const pollInterval = setInterval(async () => {
+      try {
+        const msgData = await apiRequest(`/api/messaging/conversations/${id}/messages/`);
+        if (Array.isArray(msgData?.results)) {
+          setMessages(msgData.results);
+        }
+      } catch {
+        // Ignore transient poll errors
+      }
+    }, 5000);
 
     const token = getAccessToken();
     const ws = new WebSocket(wsUrl(`/ws/chat/${id}/?token=${token}`));
@@ -79,6 +93,7 @@ export default function ChatPage() {
     };
 
     return () => {
+      clearInterval(pollInterval);
       ws.close();
       stopTracks();
     };
@@ -248,7 +263,9 @@ export default function ChatPage() {
   const chatSubtitle = isGroup
     ? `${groupInfo?.members_count ?? conversation?.participants?.length ?? 0} participants`
     : otherUser
-    ? `@${otherUser.username}`
+    ? otherUser.is_online
+      ? `● Active now · @${otherUser.username}`
+      : `Offline · @${otherUser.username}`
     : "";
 
   const groupImgSrc = groupInfo?.group_image || conversation?.group_image;
@@ -434,7 +451,8 @@ export default function ChatPage() {
                             <img
                               src={apiUrl(att.file)}
                               alt="attachment"
-                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10 }}
+                              onClick={() => setLightboxUrl(apiUrl(att.file))}
+                              style={{ maxWidth: "100%", maxHeight: 240, borderRadius: 10, cursor: "zoom-in" }}
                             />
                           ) : att.file_type === "audio" ? (
                             <audio
@@ -617,6 +635,36 @@ export default function ChatPage() {
             </form>
           )}
         </>
+      )}
+
+      {lightboxUrl && (
+        <div className="modal-backdrop" onClick={() => setLightboxUrl(null)} style={{ zIndex: 120 }}>
+          <div style={{ position: "relative", maxWidth: "92vw", maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              style={{
+                position: "absolute",
+                top: -14,
+                right: -14,
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                border: "none",
+                background: "#14132a",
+                color: "#fff",
+                fontWeight: 700,
+              }}
+            >
+              ✕
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Full preview"
+              style={{ maxWidth: "92vw", maxHeight: "88vh", borderRadius: 14, display: "block" }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

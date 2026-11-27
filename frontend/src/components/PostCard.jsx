@@ -19,8 +19,13 @@ export default function PostCard({ post, onDeleted }) {
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
   const [reporting, setReporting] = useState(false);
   const [reportReason, setReportReason] = useState("Inappropriate content");
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   const isOwner = user?.id === post.author?.id;
+  const postTypeLabel =
+    post.videos?.length > 0 ? "Video" : post.images?.length > 0 ? "Photo" : "Text";
+  const postTypePill =
+    post.videos?.length > 0 ? "pill-purple" : post.images?.length > 0 ? "pill-blue" : "pill-green";
 
   async function toggleLike() {
     if (liking) return;
@@ -146,7 +151,8 @@ export default function PostCard({ post, onDeleted }) {
           </div>
         </Link>
 
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span className={`pill ${postTypePill}`}>{postTypeLabel}</span>
           {isOwner ? (
             <button type="button" className="btn btn-ghost btn-sm" onClick={handleDeletePost} title="Delete post">
               🗑️
@@ -174,11 +180,47 @@ export default function PostCard({ post, onDeleted }) {
           <img
             src={apiUrl(img.image)}
             alt={img.caption || "Post attachment"}
-            style={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 10 }}
+            onClick={() => setLightboxImg({ url: apiUrl(img.image), caption: img.caption })}
+            style={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 12, cursor: "zoom-in" }}
           />
           {img.caption && <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: 4 }}>{img.caption}</p>}
         </div>
       ))}
+
+      {lightboxImg && (
+        <div className="modal-backdrop" onClick={() => setLightboxImg(null)} style={{ zIndex: 120 }}>
+          <div style={{ position: "relative", maxWidth: "92vw", maxHeight: "90vh", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setLightboxImg(null)}
+              style={{
+                position: "absolute",
+                top: -14,
+                right: -14,
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                border: "none",
+                background: "#14132a",
+                color: "#fff",
+                fontWeight: 700,
+              }}
+            >
+              ✕
+            </button>
+            <img
+              src={lightboxImg.url}
+              alt={lightboxImg.caption || "Photo"}
+              style={{ maxWidth: "92vw", maxHeight: "82vh", borderRadius: 14, display: "block", margin: "0 auto" }}
+            />
+            {lightboxImg.caption && (
+              <div style={{ marginTop: 10, color: "#fff", fontSize: "0.92rem", background: "rgba(0,0,0,0.6)", padding: "6px 14px", borderRadius: 999, display: "inline-block" }}>
+                {lightboxImg.caption}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {post.videos?.map((vid) => (
         <div key={vid.id} style={{ marginBottom: 10 }}>

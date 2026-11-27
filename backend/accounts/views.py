@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
@@ -119,6 +120,7 @@ class LoginView(APIView):
                 "message": "Login successful.",
                 "user": UserAccountSerializer(user).data,
                 "access": str(refresh.access_token),
+                "refresh": str(refresh),
             },
             status=status.HTTP_200_OK,
         )
@@ -165,7 +167,10 @@ class CookieTokenRefreshView(APIView):
             )
 
         response = Response(
-            {"access": str(new_refresh.access_token)},
+            {
+                "access": str(new_refresh.access_token),
+                "refresh": str(new_refresh),
+            },
             status=status.HTTP_200_OK,
         )
         _set_refresh_cookie(response, str(new_refresh))
@@ -204,6 +209,7 @@ class CurrentUserView(APIView):
         responses={200: UserAccountSerializer},
     )
     def get(self, request):
+        cache.set(f"user_online_{request.user.id}", True, timeout=240)
         return Response(UserAccountSerializer(request.user).data, status=status.HTTP_200_OK)
 
 

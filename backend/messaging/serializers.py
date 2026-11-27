@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
@@ -16,10 +17,14 @@ from .models import (
 
 class ChatUserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.SerializerMethodField()
+    is_online = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("id", "username", "full_name", "is_verified", "profile_picture_url")
+        fields = ("id", "username", "full_name", "is_verified", "profile_picture_url", "is_online")
+
+    def get_is_online(self, obj):
+        return bool(cache.get(f"user_online_{obj.id}"))
 
     def get_profile_picture_url(self, obj):
         request = self.context.get("request")

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { apiRequest, setAccessToken } from "../api/client";
+import { apiRequest, clearAuthTokens, getRefreshToken } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import TZLogo from "./TZLogo";
@@ -52,12 +52,16 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   async function handleAdminLogout() {
+    const currentRefresh = getRefreshToken();
     try {
-      await apiRequest("/api/admin-api/logout/", { method: "POST", body: JSON.stringify({}) });
+      await apiRequest("/api/admin-api/logout/", {
+        method: "POST",
+        body: JSON.stringify(currentRefresh ? { refresh: currentRefresh } : {}),
+      });
     } catch {
       // Ignore
     } finally {
-      setAccessToken(null);
+      clearAuthTokens();
       setUser(null);
       showToast("Admin logged out.");
       navigate("/login");

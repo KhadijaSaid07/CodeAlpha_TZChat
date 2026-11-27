@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -92,6 +93,7 @@ class ConversationListView(APIView):
         responses={200: ConversationSerializer(many=True)},
     )
     def get(self, request):
+        cache.set(f"user_online_{request.user.id}", True, timeout=240)
         convs = (
             Conversation.objects.filter(members__user=request.user)
             .select_related("group")
@@ -99,7 +101,21 @@ class ConversationListView(APIView):
             .distinct()
             .order_by("-updated_at")
         )
-        return Response(ConversationSerializer(convs, many=True, context={"request": request}).data)
+        # Deduplicate direct conversations so one person never appears more than once
+        seen_direct_peers = set()
+        unique_convs = []
+        for c in convs:
+            if c.conversation_type == Conversation.TYPE_DIRECT:
+                peer_ids = sorted(
+                    m.user_id for m in c.members.all() if m.user_id != request.user.id
+                )
+                peer_key = tuple(peer_ids) if peer_ids else (request.user.id,)
+                if peer_key in seen_direct_peers:
+                    continue
+                seen_direct_peers.add(peer_key)
+            unique_convs.append(c)
+
+        return Response(ConversationSerializer(unique_convs, many=True, context={"request": request}).data)
 
 
 class ConversationDetailView(APIView):
@@ -136,6 +152,7 @@ class ConversationMessagesView(APIView):
         responses={200: MessageSerializer(many=True), 403: OpenApiResponse(description="Not a participant")},
     )
     def get(self, request, conversation_id):
+        cache.set(f"user_online_{request.user.id}", True, timeout=240)
         conv = self._get_member_conversation(request.user, conversation_id)
         if not conv:
             return Response({"detail": "You are not a participant in this conversation."}, status=status.HTTP_403_FORBIDDEN)
@@ -145,12 +162,15 @@ class ConversationMessagesView(APIView):
             status=Message.STATUS_DELIVERED
         )
 
-        qs = conv.messages.select_related("sender", "sender__profile").prefetch_related("attachments")
-        paginator = PageNumberPagination()
-        page = paginator.paginate_queryset(qs, request)
-        return paginator.get_paginated_response(
-            MessageSerializer(page, many=True, context={"request": request}).data
+        # Always return the latest 100 messages in chronological order so history never disappears
+        recent = list(
+            conv.messages.select_related("sender", "sender__profile")
+            .prefetch_related("attachments")
+            .order_by("-created_at")[:100]
         )
+        recent.reverse()
+        data = MessageSerializer(recent, many=True, context={"request": request}).data
+        return Response({"count": len(data), "results": data})
 
     @extend_schema(
         tags=["Messaging"],
