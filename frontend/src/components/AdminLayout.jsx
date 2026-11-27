@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 import { apiRequest, setAccessToken } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import TZLogo from "./TZLogo";
 import UserAvatar from "./UserAvatar";
 
 const PAGE_TITLES = {
@@ -93,12 +94,16 @@ export default function AdminLayout() {
             ☰
           </button>
 
-          <div>
-            <div style={{ fontWeight: 700, fontSize: "1.05rem", color: "#0f172a", lineHeight: 1.2 }}>
+          <Link to="/admin/dashboard" className="topbar-brand">
+            <TZLogo size={34} showText subtitle="Admin" lightText />
+          </Link>
+
+          <div className="hide-mobile" style={{ borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#ffffff", lineHeight: 1.2 }}>
               {pageTitle}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-              <Link to="/admin/dashboard">Admin</Link> / {pageTitle}
+            <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.68)" }}>
+              Admin / {pageTitle}
             </div>
           </div>
         </div>
@@ -178,11 +183,10 @@ export default function AdminLayout() {
       </header>
 
       <div className={`shell-body admin-shell-body ${collapsed ? "admin-collapsed" : ""}`}>
-        {/* Collapsible Left Sidebar */}
+        {/* Collapsible Left Sidebar (distinct executive slate theme) */}
         <aside className={`admin-sidebar ${mobileOpen ? "admin-sidebar-mobile-open" : ""}`}>
-          <div style={{ padding: "4px 8px 10px", fontWeight: 800, color: "#fff", fontSize: "1.05rem", display: "flex", alignItems: "center", gap: 8 }}>
-            <span>🛡️</span>
-            {!collapsed && <span>TZChat Admin</span>}
+          <div style={{ padding: "4px 8px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <TZLogo size={30} showText={!collapsed} subtitle={!collapsed ? "Control Panel" : ""} lightText />
           </div>
 
           <NavLink to="/admin/dashboard" className={({ isActive }) => `admin-nav-item ${isActive ? "active" : ""}`} onClick={() => setMobileOpen(false)}>
@@ -274,12 +278,12 @@ export default function AdminLayout() {
             <span>⚙️</span>{!collapsed && <span>Admin Settings</span>}
           </NavLink>
 
-          <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.12)", margin: "8px 0" }} />
+          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "8px 0" }} />
           <button
             type="button"
             className="admin-nav-item"
             onClick={handleAdminLogout}
-            style={{ background: "none", border: "none", textAlign: "left", width: "100%" }}
+            style={{ background: "none", border: "none", textAlign: "left", width: "100%", color: "var(--danger)" }}
           >
             <span>🚪</span>{!collapsed && <span>Logout</span>}
           </button>
