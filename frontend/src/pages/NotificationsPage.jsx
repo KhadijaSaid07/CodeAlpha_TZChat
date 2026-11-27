@@ -152,7 +152,7 @@ export default function NotificationsPage() {
               type="checkbox"
               checked={selectedIds.length === items.length && items.length > 0}
               onChange={toggleSelectAll}
-              style={{ width: 16, height: 16, accentColor: "#1565f5" }}
+              style={{ width: 16, height: 16, accentColor: "var(--primary)" }}
             />
             <span>Select all ({items.length})</span>
           </label>
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
                   padding: 12,
                   borderRadius: 10,
                   background: n.is_read ? "#fff" : "var(--primary-light)",
-                  border: checked ? "1px solid #1565f5" : "1px solid var(--border)",
+                  border: checked ? "1px solid var(--primary)" : "1px solid var(--border)",
                   gap: 10,
                 }}
               >
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleSelect(n.id)}
-                    style={{ width: 16, height: 16, accentColor: "#1565f5", flexShrink: 0 }}
+                    style={{ width: 16, height: 16, accentColor: "var(--primary)", flexShrink: 0 }}
                   />
                   <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>{ICONS[n.notification_type] || "🔔"}</span>
                   <div style={{ minWidth: 0 }}>
