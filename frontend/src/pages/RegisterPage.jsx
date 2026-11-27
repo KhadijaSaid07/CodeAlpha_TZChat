@@ -1,29 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import PasswordInput from "../components/PasswordInput";
+import TZLogo from "../components/TZLogo";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-
-const COUNTRY_CODES = [
-  { code: "+255", label: "🇹🇿 Tanzania (+255)" },
-  { code: "+254", label: "🇰🇪 Kenya (+254)" },
-  { code: "+256", label: "🇺🇬 Uganda (+256)" },
-  { code: "+250", label: "🇷🇼 Rwanda (+250)" },
-  { code: "+257", label: "🇧🇮 Burundi (+257)" },
-  { code: "+27", label: "🇿🇦 South Africa (+27)" },
-  { code: "+234", label: "🇳🇬 Nigeria (+234)" },
-  { code: "+233", label: "🇬🇭 Ghana (+233)" },
-  { code: "+20", label: "🇪🇬 Egypt (+20)" },
-  { code: "+44", label: "🇬🇧 United Kingdom (+44)" },
-  { code: "+1", label: "🇺🇸 USA / Canada (+1)" },
-  { code: "+91", label: "🇮🇳 India (+91)" },
-  { code: "+971", label: "🇦🇪 UAE (+971)" },
-  { code: "+966", label: "🇸🇦 Saudi Arabia (+966)" },
-  { code: "+49", label: "🇩🇪 Germany (+49)" },
-  { code: "+33", label: "🇫🇷 France (+33)" },
-  { code: "+86", label: "🇨🇳 China (+86)" },
-  { code: "other", label: "🌍 Other (type +code)" },
-];
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -31,13 +11,12 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const nextUrl = location.state?.from || sessionStorage.getItem("tzchat_next") || "";
-  const [countryCode, setCountryCode] = useState("+255");
-  const [customCode, setCustomCode] = useState("+");
-  const [localPhone, setLocalPhone] = useState("");
+
   const [form, setForm] = useState({
     full_name: "",
     username: "",
     email: "",
+    phone_number: "",
     password: "",
     confirm_password: "",
   });
@@ -53,7 +32,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     if (!agreed) {
-      setError("Please agree to the Terms & Conditions.");
+      setError("Please agree to the Terms & Services.");
       return;
     }
     if (form.password !== form.confirm_password) {
@@ -61,13 +40,10 @@ export default function RegisterPage() {
       return;
     }
 
-    const prefix = countryCode === "other" ? customCode.trim() : countryCode;
-    const cleanedLocal = localPhone.replace(/^0+/, "").replace(/[\s\-()]/g, "");
-    const fullPhone = `${prefix}${cleanedLocal}`;
-
+    const cleanedPhone = form.phone_number.replace(/[\s\-()]/g, "");
     setSubmitting(true);
     try {
-      await register({ ...form, phone_number: fullPhone });
+      await register({ ...form, phone_number: cleanedPhone });
       showToast("Your registration is successful! Please login.");
       navigate("/login", {
         state: { successMessage: "Your registration is successful! Please login.", from: nextUrl },
@@ -82,17 +58,21 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <Link to="/" className="btn btn-ghost btn-sm">←</Link>
-          <div>
-            <h2 style={{ fontSize: "1.25rem" }}>Create Account</h2>
-            <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Let&apos;s get started</p>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Link to="/" className="btn btn-ghost btn-sm" style={{ padding: "6px 10px" }}>
+            ← Home
+          </Link>
+          <TZLogo size={40} />
         </div>
+
+        <h2 style={{ fontSize: "1.4rem", marginBottom: 4 }}>Create Account</h2>
+        <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: 18 }}>
+          Join TZChat in seconds. Enter your details below.
+        </p>
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 11 }}>
           <input
             className="input"
             type="text"
@@ -120,41 +100,15 @@ export default function RegisterPage() {
             onChange={(e) => updateField("email", e.target.value)}
             required
           />
-
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(115px, 145px) minmax(0, 1fr)", gap: 8 }}>
-            <select
-              className="input"
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value)}
-              aria-label="Country code"
-            >
-              {COUNTRY_CODES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <input
-              className="input"
-              type="tel"
-              placeholder="Phone number (e.g. 712345678)"
-              value={localPhone}
-              onChange={(e) => setLocalPhone(e.target.value)}
-              required
-            />
-          </div>
-
-          {countryCode === "other" && (
-            <input
-              className="input"
-              type="text"
-              placeholder="Country code (e.g. +81)"
-              value={customCode}
-              onChange={(e) => setCustomCode(e.target.value)}
-              required
-            />
-          )}
-
+          <input
+            className="input"
+            type="tel"
+            autoComplete="tel"
+            placeholder="Phone number (e.g. +255712345678)"
+            value={form.phone_number}
+            onChange={(e) => updateField("phone_number", e.target.value)}
+            required
+          />
           <PasswordInput
             value={form.password}
             onChange={(e) => updateField("password", e.target.value)}
@@ -168,8 +122,13 @@ export default function RegisterPage() {
             autoComplete="new-password"
           />
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", color: "var(--muted)" }}>
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.84rem", color: "var(--muted)", marginTop: 2 }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              style={{ accentColor: "var(--primary)", width: 16, height: 16, flexShrink: 0 }}
+            />
             <span>
               I agree to the{" "}
               <Link
@@ -179,18 +138,31 @@ export default function RegisterPage() {
                 onClick={(e) => e.stopPropagation()}
                 style={{ fontWeight: 600, textDecoration: "underline" }}
               >
-                Terms &amp; Services
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ fontWeight: 600, textDecoration: "underline" }}
+              >
+                Privacy Policy
               </Link>
             </span>
           </label>
 
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
+          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ marginTop: 4 }}>
             {submitting ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
-        <p style={{ textAlign: "center", marginTop: 14, fontSize: "0.9rem", color: "var(--muted)" }}>
-          Already have an account? <Link to="/login">Login</Link>
+        <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.88rem", color: "var(--muted)" }}>
+          Already have an account?{" "}
+          <Link to="/login" state={{ from: nextUrl }} style={{ fontWeight: 600 }}>
+            Login
+          </Link>
         </p>
       </div>
     </div>
