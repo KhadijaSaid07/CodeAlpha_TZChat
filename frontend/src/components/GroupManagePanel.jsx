@@ -233,7 +233,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
   }
 
   const blueHeaderStyle = {
-    background: "#1565f5",
+    background: "var(--primary)",
     color: "#fff",
     padding: "12px 14px",
     borderRadius: "12px 12px 0 0",
@@ -327,7 +327,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
             type="submit"
             className="btn btn-primary"
             disabled={saving}
-            style={{ width: "100%", borderRadius: 24, padding: "11px 16px", background: "#1565f5" }}
+            style={{ width: "100%", borderRadius: 24, padding: "11px 16px", background: "var(--primary)" }}
           >
             {saving ? "Saving changes..." : "Save changes"}
           </button>
@@ -399,7 +399,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleSelectUser(u.username)}
-                      style={{ width: 18, height: 18, accentColor: "#1565f5", flexShrink: 0 }}
+                      style={{ width: 18, height: 18, accentColor: "var(--primary)", flexShrink: 0 }}
                     />
                   </label>
                 );
@@ -413,7 +413,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
               className="btn btn-primary"
               disabled={addingUsers || selectedUsernames.length === 0}
               onClick={handleAddSelected}
-              style={{ borderRadius: 24, padding: "10px 22px", background: "#1565f5" }}
+              style={{ borderRadius: 24, padding: "10px 22px", background: "var(--primary)" }}
             >
               {addingUsers
                 ? "Adding..."
@@ -470,7 +470,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
             ) : (
               <div
                 className="avatar-circle"
-                style={{ width: 88, height: 88, fontSize: "2rem", background: "#1565f5", color: "#fff" }}
+                style={{ width: 88, height: 88, fontSize: "2rem", background: "var(--primary)", color: "#fff" }}
               >
                 {group.name?.charAt(0).toUpperCase()}
               </div>
@@ -485,7 +485,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
                   width: 30,
                   height: 30,
                   borderRadius: "50%",
-                  background: "#1565f5",
+                  background: "var(--primary)",
                   color: "#fff",
                   display: "grid",
                   placeItems: "center",
@@ -544,7 +544,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
         >
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: "0.78rem", color: "var(--muted)" }}>Group description</div>
-            <div style={{ fontSize: "0.92rem", marginTop: 2, color: group.description ? "var(--text)" : "#1565f5", fontWeight: group.description ? 500 : 600 }}>
+            <div style={{ fontSize: "0.92rem", marginTop: 2, color: group.description ? "var(--text)" : "var(--primary)", fontWeight: group.description ? 500 : 600 }}>
               {group.description || "Add description"}
             </div>
           </div>
@@ -613,7 +613,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
             <button
               type="button"
               className="btn btn-primary btn-sm"
-              style={{ background: "#1565f5", flexShrink: 0 }}
+              style={{ background: "var(--primary)", flexShrink: 0 }}
               onClick={() => {
                 navigator.clipboard?.writeText(inviteLink);
                 showToast("Invite link copied!");
@@ -652,7 +652,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
                     width: 36,
                     height: 36,
                     borderRadius: "50%",
-                    background: "#1565f5",
+                    background: "var(--primary)",
                     color: "#fff",
                     display: "grid",
                     placeItems: "center",
@@ -696,8 +696,8 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
                   {(m.role === "owner" || m.role === "admin") && (
                     <span
                       style={{
-                        background: m.role === "owner" ? "#1565f5" : "#e0edff",
-                        color: m.role === "owner" ? "#fff" : "#1565f5",
+                        background: m.role === "owner" ? "var(--primary)" : "#e0edff",
+                        color: m.role === "owner" ? "#fff" : "var(--primary)",
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         padding: "3px 8px",
