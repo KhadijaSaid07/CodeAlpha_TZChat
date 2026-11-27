@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import TZLogo from "../components/TZLogo";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,8 +30,15 @@ export default function ForgotPasswordPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h2 style={{ marginBottom: 6 }}>Reset Password</h2>
-        <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Link to="/login" className="btn btn-ghost btn-sm" style={{ padding: "6px 10px" }}>
+            ← Login
+          </Link>
+          <TZLogo size={40} />
+        </div>
+
+        <h2 style={{ fontSize: "1.35rem", marginBottom: 6 }}>Reset Password</h2>
+        <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: 16 }}>
           Enter your registered email address to receive reset instructions.
         </p>
         {error && <div className="alert alert-error">{error}</div>}
@@ -49,10 +57,6 @@ export default function ForgotPasswordPage() {
             {submitting ? "Sending..." : "Send Reset Instructions"}
           </button>
         </form>
-
-        <p style={{ textAlign: "center", marginTop: 14, fontSize: "0.9rem" }}>
-          <Link to="/login">Back to Login</Link>
-        </p>
       </div>
     </div>
   );
