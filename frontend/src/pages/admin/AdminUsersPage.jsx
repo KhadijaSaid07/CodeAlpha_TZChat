@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
 
       {suspendTarget && (
         <form onSubmit={handleSuspendSubmit} className="card" style={{ background: "#fef2f2", display: "grid", gap: 8 }}>
-          <strong>Suspend @{suspendTarget.username} — Reason Required:</strong>
+          <strong>Suspend @{suspendTarget.username} - Reason Required:</strong>
           <div style={{ display: "flex", gap: 8 }}>
             <input className="input" placeholder="Enter suspension reason..." value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} required />
             <button type="submit" className="btn btn-danger btn-sm">Confirm Suspend</button>
