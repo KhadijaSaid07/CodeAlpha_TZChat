@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import PasswordInput from "../components/PasswordInput";
+import TZLogo from "../components/TZLogo";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -43,10 +44,16 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="brand-badge">💬</div>
-        <h2 style={{ textAlign: "center", marginBottom: 4 }}>Login to TZChat</h2>
-        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.9rem", marginBottom: 18 }}>
-          Welcome back!
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <Link to="/" className="btn btn-ghost btn-sm" style={{ padding: "6px 10px" }}>
+            ← Home
+          </Link>
+          <TZLogo size={40} />
+        </div>
+
+        <h2 style={{ fontSize: "1.4rem", marginBottom: 4 }}>Welcome Back</h2>
+        <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: 18 }}>
+          Sign in to continue to TZChat.
         </p>
 
         {nextUrl.includes("/groups?join=") && !regSuccess && (
@@ -74,7 +81,7 @@ export default function LoginPage() {
             placeholder="Password"
             autoComplete="current-password"
           />
-          <div style={{ textAlign: "right", fontSize: "0.85rem" }}>
+          <div style={{ textAlign: "right", fontSize: "0.84rem" }}>
             <Link to="/forgot-password">Forgot Password?</Link>
           </div>
           <button type="submit" className="btn btn-primary" disabled={submitting}>
@@ -82,8 +89,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.9rem", color: "var(--muted)" }}>
-          Don&apos;t have an account? <Link to="/register" state={{ from: nextUrl }}>Sign up</Link>
+        <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.88rem", color: "var(--muted)" }}>
+          Don&apos;t have an account?{" "}
+          <Link to="/register" state={{ from: nextUrl }} style={{ fontWeight: 600 }}>
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
