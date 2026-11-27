@@ -257,5 +257,5 @@ class ProtectedAvatarView(APIView):
                 return Response({"detail": "Profile picture file not found."}, status=status.HTTP_404_NOT_FOUND)
         try:
             return FileResponse(profile.profile_picture.open("rb"))
-        except FileNotFoundError:
+        except (FileNotFoundError, NotImplementedError, OSError):
             return Response({"detail": "Profile picture file not found."}, status=status.HTTP_404_NOT_FOUND)
