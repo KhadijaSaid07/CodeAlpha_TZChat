@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
           <h3>Administrator Accounts &amp; Permissions</h3>
           {admins.map((adm) => (
             <div key={adm.id} className="card" style={{ background: "var(--bg)", display: "grid", gap: 8 }}>
-              <div><strong>{adm.full_name}</strong> (@{adm.username}) — <span className="pill pill-blue">{adm.role}</span></div>
+              <div><strong>{adm.full_name}</strong> (@{adm.username}) - <span className="pill pill-blue">{adm.role}</span></div>
               {adm.role === "admin" && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: "0.86rem" }}>
                   {[
