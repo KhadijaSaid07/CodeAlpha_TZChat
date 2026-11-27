@@ -165,7 +165,7 @@ export default function GroupsPage() {
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            style={{ background: "#1565f5", borderRadius: 20, padding: "8px 16px" }}
+            style={{ background: "var(--primary)", borderRadius: 20, padding: "8px 16px" }}
             onClick={() => setShowCreate((v) => !v)}
           >
             {showCreate ? "✕ Close" : "+ New Group"}
@@ -183,7 +183,7 @@ export default function GroupsPage() {
               background: "var(--bg)",
             }}
           >
-            <div style={{ background: "#1565f5", color: "#fff", padding: "10px 14px", fontWeight: 700 }}>
+            <div style={{ background: "var(--primary)", color: "#fff", padding: "10px 14px", fontWeight: 700 }}>
               New Group
             </div>
             <div style={{ padding: 14, display: "grid", gap: 12 }}>
@@ -196,7 +196,7 @@ export default function GroupsPage() {
                     height: 64,
                     borderRadius: "50%",
                     background: "#e0edff",
-                    color: "#1565f5",
+                    color: "var(--primary)",
                     display: "grid",
                     placeItems: "center",
                     cursor: "pointer",
@@ -279,7 +279,7 @@ export default function GroupsPage() {
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleInitialMember(u.username)}
-                            style={{ width: 17, height: 17, accentColor: "#1565f5" }}
+                            style={{ width: 17, height: 17, accentColor: "var(--primary)" }}
                           />
                         </label>
                       );
@@ -292,7 +292,7 @@ export default function GroupsPage() {
                 type="submit"
                 className="btn btn-primary"
                 disabled={creating}
-                style={{ borderRadius: 24, background: "#1565f5", width: "100%" }}
+                style={{ borderRadius: 24, background: "var(--primary)", width: "100%" }}
               >
                 {creating ? "Creating Group..." : "Create Group & Open Chat"}
               </button>
@@ -343,7 +343,7 @@ export default function GroupsPage() {
                       style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                     />
                   ) : (
-                    <div className="avatar-circle" style={{ width: 46, height: 46, background: "#1565f5", color: "#fff", flexShrink: 0 }}>
+                    <div className="avatar-circle" style={{ width: 46, height: 46, background: "var(--primary)", color: "#fff", flexShrink: 0 }}>
                       {g.name?.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -362,7 +362,7 @@ export default function GroupsPage() {
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
-                      style={{ background: "#1565f5" }}
+                      style={{ background: "var(--primary)" }}
                       onClick={() => navigate(`/chat/${g.conversation_id}`)}
                     >
                       Open Chat
