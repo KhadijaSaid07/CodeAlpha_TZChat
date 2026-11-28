@@ -250,17 +250,31 @@ class ConversationMarkReadView(APIView):
         return Response({"message": "Conversation marked as read."})
 
 
+def _is_group_moderator(user: User, conv: Conversation) -> bool:
+    if user.role in (User.ROLE_ADMIN, User.ROLE_SUPER_ADMIN):
+        return True
+    if conv.conversation_type == Conversation.TYPE_GROUP and conv.group_id:
+        from groups.models import GroupMember
+
+        return GroupMember.objects.filter(
+            group_id=conv.group_id,
+            user=user,
+            role__in=[GroupMember.ROLE_OWNER, GroupMember.ROLE_ADMIN],
+        ).exists()
+    return False
+
+
 class MessageDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         tags=["Messaging"],
-        summary="Delete own message",
+        summary="Delete own message (or any message if Group Owner/Admin)",
         responses={200: OpenApiResponse(description="Message deleted")},
     )
     def delete(self, request, message_id):
-        msg = get_object_or_404(Message, pk=message_id)
-        if msg.sender_id != request.user.id:
+        msg = get_object_or_404(Message.objects.select_related("conversation"), pk=message_id)
+        if msg.sender_id != request.user.id and not _is_group_moderator(request.user, msg.conversation):
             return Response(
                 {"detail": "You can only delete your own messages."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -269,6 +283,40 @@ class MessageDeleteView(APIView):
         msg.content = ""
         msg.save(update_fields=["is_deleted", "content", "updated_at"])
         return Response({"message": "Message deleted."})
+
+
+class ConversationClearMessagesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["Messaging"],
+        summary="Clear one, multiple selected, or all permitted messages in a conversation",
+        responses={200: OpenApiResponse(description="Messages cleared")},
+    )
+    def post(self, request, conversation_id):
+        conv = get_object_or_404(Conversation, pk=conversation_id)
+        if not ConversationMember.objects.filter(conversation=conv, user=request.user).exists():
+            return Response(
+                {"detail": "You are not a participant in this conversation."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        can_delete_all = _is_group_moderator(request.user, conv)
+        qs = conv.messages.filter(is_deleted=False)
+        if not can_delete_all:
+            qs = qs.filter(sender=request.user)
+
+        ids = request.data.get("message_ids")
+        if isinstance(ids, list) and len(ids) > 0:
+            qs = qs.filter(id__in=ids)
+
+        cleared_ids = list(qs.values_list("id", flat=True))
+        qs.update(is_deleted=True, content="", updated_at=timezone.now())
+        return Response(
+            {
+                "message": f"Cleared {len(cleared_ids)} message(s).",
+                "cleared_ids": cleared_ids,
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
