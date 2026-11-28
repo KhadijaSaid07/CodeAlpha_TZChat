@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from accounts.models import User
 from accounts.profile_permissions import can_view_profile
 from follows.models import Follow, Friendship
+from privacy.models import BlockedUser
 
 from .models import Comment, Like, Post, PostImage, PostVideo
 from .permissions import can_view_post
@@ -27,7 +28,7 @@ from .serializers import (
 
 
 def _visible_posts_queryset(user):
-    """Return posts visible to `user` (own, public, or friends' posts)."""
+    """Return posts visible to `user` (own, public, friends, or followers) excluding blocked accounts."""
     friend_ids = list(
         Friendship.objects.filter(
             Q(sender=user) | Q(receiver=user),
@@ -36,12 +37,26 @@ def _visible_posts_queryset(user):
     )
     flat_friend_ids = {uid for pair in friend_ids for uid in pair if uid != user.id}
 
+    following_ids = set(
+        Follow.objects.filter(
+            follower=user,
+            status=Follow.STATUS_ACCEPTED,
+        ).values_list("following_id", flat=True)
+    )
+
+    blocked_pairs = BlockedUser.objects.filter(
+        Q(blocker=user) | Q(blocked=user)
+    ).values_list("blocker_id", "blocked_id")
+    blocked_ids = {uid for pair in blocked_pairs for uid in pair if uid != user.id}
+
     return (
         Post.objects.filter(is_removed=False, author__is_active=True, author__is_suspended=False)
+        .exclude(author_id__in=blocked_ids)
         .filter(
             Q(author=user)
             | Q(visibility=Post.VISIBILITY_PUBLIC)
             | Q(visibility=Post.VISIBILITY_FRIENDS, author_id__in=flat_friend_ids)
+            | Q(visibility=Post.VISIBILITY_FOLLOWERS, author_id__in=following_ids)
         )
         .select_related("author", "author__profile")
         .prefetch_related("images", "videos", "likes", "comments")
