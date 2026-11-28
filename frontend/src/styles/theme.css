@@ -615,12 +615,107 @@ select {
 }
 
 /* Unified App Shell (Shared design for both User & Admin portals) */
-.app-shell,
+.app-shell {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(147, 51, 234, 0.06) 0%, transparent 38%),
+    radial-gradient(circle at 90% 10%, rgba(79, 70, 229, 0.07) 0%, transparent 40%),
+    var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
 .admin-shell {
   min-height: 100dvh;
   background: var(--bg);
   display: flex;
   flex-direction: column;
+}
+
+/* Home Feed & Post Card Polish */
+.composer-card {
+  border-radius: 18px;
+  border: 1.5px solid var(--border);
+  border-top: 3px solid var(--primary);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.composer-card:focus-within {
+  border-color: #c7c9f8;
+  border-top-color: var(--accent);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.1);
+}
+
+.post-card {
+  border-radius: 18px;
+  border: 1.5px solid var(--border);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  border-color: #d6d4f7;
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.08);
+}
+
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: 16px;
+}
+
+.filter-pill {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.filter-pill:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: #c7c9f8;
+  transform: translateY(-1px);
+}
+
+.filter-pill.active {
+  background: var(--brand-gradient);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.25);
+}
+
+.post-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.post-action-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: #d6d8f8;
+}
+
+.post-action-btn.liked,
+.post-action-btn.like-btn:hover {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
 }
 
 .topbar {
