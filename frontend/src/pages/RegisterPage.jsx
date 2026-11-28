@@ -25,25 +25,67 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   function updateField(field, value) {
+    if (field === "full_name") {
+      // Prevent typing numbers or invalid symbols in Full Name
+      const lettersOnly = value.replace(/[^A-Za-z\s'-]/g, "");
+      setForm((prev) => ({ ...prev, full_name: lettersOnly }));
+      return;
+    }
+    if (field === "phone_number") {
+      // Allow only leading + and digits/spaces/hyphens
+      const phoneClean = value.replace(/[^0-9+\s-]/g, "");
+      setForm((prev) => ({ ...prev, phone_number: phoneClean }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    if (!agreed) {
-      setError("Please agree to the Terms & Services.");
+    const trimmedName = form.full_name.trim();
+    const trimmedUsername = form.username.trim();
+    const trimmedEmail = form.email.trim();
+    const cleanedPhone = form.phone_number.replace(/[\s\-()]/g, "");
+
+    if (!/^[A-Za-z][A-Za-z\s'-]{1,79}$/.test(trimmedName)) {
+      setError("Full Name must contain only letters (at least 2 characters, no numbers).");
+      return;
+    }
+    if (!/^[A-Za-z][A-Za-z0-9_]{2,29}$/.test(trimmedUsername)) {
+      setError("Username must be 3-30 characters, start with a letter, and contain only letters, numbers, or underscores.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!/^\+?[0-9]{7,15}$/.test(cleanedPhone)) {
+      setError("Phone number must be 7-15 digits (optional leading +, no letters).");
+      return;
+    }
+    if (form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+      setError("Password must be at least 8 characters and include both letters and numbers.");
       return;
     }
     if (form.password !== form.confirm_password) {
       setError("Passwords do not match.");
       return;
     }
+    if (!agreed) {
+      setError("Please agree to the Terms of Service and Privacy Policy.");
+      return;
+    }
 
-    const cleanedPhone = form.phone_number.replace(/[\s\-()]/g, "");
     setSubmitting(true);
     try {
-      await register({ ...form, phone_number: cleanedPhone });
+      await register({
+        ...form,
+        full_name: trimmedName,
+        username: trimmedUsername,
+        email: trimmedEmail,
+        phone_number: cleanedPhone,
+      });
       showToast("Your registration is successful! Please login.");
       navigate("/login", {
         state: { successMessage: "Your registration is successful! Please login.", from: nextUrl },
