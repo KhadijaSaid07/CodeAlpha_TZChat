@@ -327,52 +327,67 @@ export default function GroupsPage() {
               <div
                 key={g.id}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  padding: 12,
+                  display: "grid",
+                  gap: 12,
+                  padding: 14,
                   border: "1px solid var(--border)",
-                  borderRadius: 12,
+                  borderRadius: 14,
+                  background: "var(--card)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
                   {g.group_image ? (
                     <img
                       src={apiUrl(g.group_image)}
                       alt={g.name}
-                      style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                      style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                     />
                   ) : (
-                    <div className="avatar-circle" style={{ width: 46, height: 46, background: "var(--primary)", color: "#fff", flexShrink: 0 }}>
+                    <div className="avatar-circle" style={{ width: 48, height: 48, background: "var(--brand-gradient)", color: "#fff", flexShrink: 0 }}>
                       {g.name?.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontWeight: 700, overflowWrap: "anywhere", wordBreak: "break-word" }}>{g.name}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <strong style={{ fontSize: "1rem", overflowWrap: "anywhere" }}>{g.name}</strong>
+                      <span className="pill pill-blue">{g.members_count} participants</span>
+                    </div>
                     {g.description && (
-                      <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: 2, overflowWrap: "anywhere", wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+                      <div
+                        style={{
+                          fontSize: "0.84rem",
+                          color: "var(--muted)",
+                          marginTop: 4,
+                          overflowWrap: "anywhere",
+                          wordBreak: "break-word",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
                         {g.description}
                       </div>
                     )}
-                    <div style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 2 }}>
-                      {g.members_count} participants
-                    </div>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
                   {g.conversation_id && (
                     <button
                       type="button"
                       className="btn btn-primary btn-sm"
-                      style={{ background: "var(--primary)" }}
+                      style={{ flex: 1 }}
                       onClick={() => navigate(`/chat/${g.conversation_id}`)}
                     >
                       Open Chat
                     </button>
                   )}
-                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setSelected(g)}>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => setSelected(g)}
+                  >
                     Group Info
                   </button>
                 </div>
