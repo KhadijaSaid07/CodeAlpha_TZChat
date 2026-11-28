@@ -133,7 +133,7 @@ export default function PostCard({ post, onDeleted }) {
   }, {});
 
   return (
-    <article className="card" style={{ marginBottom: 14 }}>
+    <article className="card post-card" style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
         <Link to={`/profile/${post.author?.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit" }}>
           <UserAvatar src={post.author?.profile_picture_url} name={post.author?.full_name || post.author?.username} size={42} />
@@ -324,11 +324,16 @@ export default function PostCard({ post, onDeleted }) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 16, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={toggleLike} disabled={liking}>
+      <div style={{ display: "flex", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+        <button
+          type="button"
+          className={`post-action-btn like-btn ${liked ? "liked" : ""}`}
+          onClick={toggleLike}
+          disabled={liking}
+        >
           {liked ? "❤️" : "🤍"} {likesCount} Like{likesCount === 1 ? "" : "s"}
         </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={toggleComments}>
+        <button type="button" className="post-action-btn" onClick={toggleComments}>
           💬 {commentsCount} Comment{commentsCount === 1 ? "" : "s"}
         </button>
       </div>
