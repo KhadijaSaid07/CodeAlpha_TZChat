@@ -37,7 +37,7 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) {
-    return <div className="auth-page"><div className="card">Loading TZChat...</div></div>;
+    return null;
   }
   if (!user) {
     const next = `${location.pathname}${location.search}`;
@@ -53,7 +53,7 @@ function ProtectedRoute({ children }) {
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
-    return <div className="auth-page"><div className="card">Loading TZChat Admin...</div></div>;
+    return null;
   }
   if (!user) return <Navigate to="/login" replace />;
   return isAdminUser(user) ? children : <Navigate to="/home" replace />;
@@ -62,7 +62,7 @@ function AdminRoute({ children }) {
 function PublicOnlyRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) {
-    return <div className="auth-page"><div className="card">Loading TZChat...</div></div>;
+    return children;
   }
   if (user) {
     if (isAdminUser(user)) return <Navigate to="/admin/dashboard" replace />;
