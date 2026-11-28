@@ -147,7 +147,14 @@ export default function PostCard({ post, onDeleted }) {
               )}
             </div>
             <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
-              @{post.author?.username} · {new Date(post.created_at).toLocaleString()} · {post.visibility}
+              @{post.author?.username} · {new Date(post.created_at).toLocaleString()} ·{" "}
+              {post.visibility === "private"
+                ? "Only Me"
+                : post.visibility === "followers"
+                ? "Followers"
+                : post.visibility === "friends"
+                ? "Friends"
+                : "Public"}
             </div>
           </div>
         </Link>
