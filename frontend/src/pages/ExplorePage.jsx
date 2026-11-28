@@ -6,12 +6,16 @@ import PostCard from "../components/PostCard";
 import UserAvatar from "../components/UserAvatar";
 import { useToast } from "../context/ToastContext";
 
+const INITIAL_PEOPLE_COUNT = 6;
+const PEOPLE_STEP = 8;
+
 export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [users, setUsers] = useState([]);
+  const [visiblePeople, setVisiblePeople] = useState(INITIAL_PEOPLE_COUNT);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +27,7 @@ export default function ExplorePage() {
         apiRequest(`/api/explore/posts/?q=${encodeURIComponent(q)}`),
       ]);
       setUsers(uData || []);
+      setVisiblePeople(INITIAL_PEOPLE_COUNT);
       setPosts(pData.results || []);
     } catch (err) {
       showToast(err.message, "error");
@@ -61,8 +66,11 @@ export default function ExplorePage() {
     }
   }
 
+  const shownUsers = users.slice(0, visiblePeople);
+  const hasMorePeople = users.length > visiblePeople;
+
   return (
-    <div style={{ display: "grid", gap: 16 }}>
+    <div style={{ maxWidth: 820, margin: "0 auto", display: "grid", gap: 16 }}>
       <div className="card">
         <h2 style={{ marginBottom: 10 }}>Explore TZChat</h2>
         <form onSubmit={handleSearch} style={{ display: "flex", gap: 10 }}>
@@ -78,33 +86,78 @@ export default function ExplorePage() {
       </div>
 
       {loading ? (
-        <div className="card">Searching...</div>
+        <div className="card" style={{ color: "var(--muted)" }}>Searching...</div>
       ) : (
         <>
           <section className="card">
-            <h3 style={{ marginBottom: 12 }}>People</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ margin: 0 }}>People</h3>
+              {users.length > INITIAL_PEOPLE_COUNT && (
+                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                  Showing {shownUsers.length} of {users.length}
+                </span>
+              )}
+            </div>
             {users.length === 0 ? (
               <p style={{ color: "var(--muted)" }}>No matching public users found.</p>
             ) : (
-              <div style={{ display: "grid", gap: 10 }}>
-                {users.map((u) => (
-                  <div key={u.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Link to={`/profile/${u.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit" }}>
-                      <UserAvatar src={u.profile_picture_url} name={u.full_name} size={40} />
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{u.full_name}</div>
-                        <div style={{ fontSize: "0.85rem", color: "var(--muted)" }}>@{u.username}</div>
+              <>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {shownUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        paddingBottom: 10,
+                        borderBottom: "1px solid var(--border)",
+                      }}
+                    >
+                      <Link to={`/profile/${u.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit", minWidth: 0 }}>
+                        <UserAvatar src={u.profile_picture_url} name={u.full_name} size={40} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 600 }}>{u.full_name}</div>
+                          <div style={{ fontSize: "0.84rem", color: "var(--muted)" }}>@{u.username}</div>
+                        </div>
+                      </Link>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <FollowButton username={u.username} initialStatus={u.follow_status} />
+                        <button type="button" className="btn btn-outline btn-sm" onClick={() => handleStartMessage(u.username)}>
+                          Message
+                        </button>
                       </div>
-                    </Link>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <FollowButton username={u.username} initialStatus={u.follow_status} />
-                      <button type="button" className="btn btn-outline btn-sm" onClick={() => handleStartMessage(u.username)}>
-                        Message
-                      </button>
                     </div>
+                  ))}
+                </div>
+
+                {users.length > INITIAL_PEOPLE_COUNT && (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 14 }}>
+                    {hasMorePeople && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        style={{ borderRadius: 999, padding: "7px 18px" }}
+                        onClick={() => setVisiblePeople((c) => c + PEOPLE_STEP)}
+                      >
+                        View More People ({users.length - shownUsers.length} more)
+                      </button>
+                    )}
+                    {visiblePeople > INITIAL_PEOPLE_COUNT && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        style={{ borderRadius: 999 }}
+                        onClick={() => setVisiblePeople(INITIAL_PEOPLE_COUNT)}
+                      >
+                        Show Less
+                      </button>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </section>
 
