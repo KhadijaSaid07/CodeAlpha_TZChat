@@ -133,7 +133,7 @@ export default function AdminSettingsPage() {
 
       {tab === "profile" && (
         <form onSubmit={saveProfile} style={{ display: "grid", gap: 12, maxWidth: 460 }}>
-          <input className="input" placeholder="Full Name" value={profileForm.full_name} onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value }))} />
+          <input className="input" placeholder="Full Name" value={profileForm.full_name} onChange={(e) => setProfileForm((p) => ({ ...p, full_name: e.target.value.replace(/[^A-Za-z\s'-]/g, "") }))} />
           <input className="input" placeholder="Username" value={profileForm.username} onChange={(e) => setProfileForm((p) => ({ ...p, username: e.target.value }))} />
           <label className="btn btn-outline btn-sm" style={{ width: "fit-content" }}>
             Upload Profile Picture
