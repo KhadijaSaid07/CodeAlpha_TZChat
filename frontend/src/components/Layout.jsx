@@ -198,15 +198,17 @@ export default function Layout() {
             <span className="nav-item-label"><SettingsIcon /> Settings</span>
           </NavLink>
 
-          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "10px 0 6px" }} />
-          <button
-            type="button"
-            className="nav-item"
-            onClick={handleLogout}
-            style={{ background: "none", border: "none", width: "100%", color: "var(--danger)" }}
-          >
-            <span className="nav-item-label"><LogoutIcon /> Sign out</span>
-          </button>
+          <div className="sidebar-footer-push">
+            <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.14)", margin: "8px 0 6px" }} />
+            <button
+              type="button"
+              className="nav-item"
+              onClick={handleLogout}
+              style={{ background: "none", border: "none", width: "100%", color: "#fda4af" }}
+            >
+              <span className="nav-item-label"><LogoutIcon /> Sign out</span>
+            </button>
+          </div>
         </aside>
 
         <main>
