@@ -88,7 +88,7 @@ export default function HomePage() {
   return (
     <div style={{ maxWidth: 740, margin: "0 auto", display: "grid", gap: 14 }}>
       {/* Clean Post Composer */}
-      <section className="card">
+      <section className="card composer-card">
         <form onSubmit={handleCreatePost}>
           <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
             <UserAvatar src={user?.profile_picture_url} name={user?.full_name || user?.username} size={42} />
@@ -183,7 +183,7 @@ export default function HomePage() {
       {error && <div className="alert alert-error">{error}</div>}
 
       {/* Clean Post Filter Tabs (no counts) */}
-      <div className="card" style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "10px 14px" }}>
+      <div className="card filter-bar">
         {[
           { key: "all", label: "All" },
           { key: "text", label: "Text" },
@@ -193,8 +193,7 @@ export default function HomePage() {
           <button
             key={f.key}
             type="button"
-            className={`btn btn-sm ${postFilter === f.key ? "btn-primary" : "btn-ghost"}`}
-            style={{ borderRadius: 999, padding: "7px 16px" }}
+            className={`filter-pill ${postFilter === f.key ? "active" : ""}`}
             onClick={() => setPostFilter(f.key)}
           >
             {f.label}
