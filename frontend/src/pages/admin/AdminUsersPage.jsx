@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
         <form onSubmit={handleCreateUser} className="card" style={{ background: "var(--bg)", display: "grid", gap: 10 }}>
           <h3>Add User</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
-            <input className="input" placeholder="Full Name" value={addForm.full_name} onChange={(e) => setAddForm((p) => ({ ...p, full_name: e.target.value }))} required />
+            <input className="input" placeholder="Full Name" value={addForm.full_name} onChange={(e) => setAddForm((p) => ({ ...p, full_name: e.target.value.replace(/[^A-Za-z\s'-]/g, "") }))} required />
             <input className="input" placeholder="Username" value={addForm.username} onChange={(e) => setAddForm((p) => ({ ...p, username: e.target.value }))} required />
             <input className="input" type="email" placeholder="Email" value={addForm.email} onChange={(e) => setAddForm((p) => ({ ...p, email: e.target.value }))} required />
             <input className="input" placeholder="+255712345678" value={addForm.phone_number} onChange={(e) => setAddForm((p) => ({ ...p, phone_number: e.target.value }))} required />
@@ -220,7 +220,7 @@ export default function AdminUsersPage() {
         <form onSubmit={handleEditSave} className="card" style={{ background: "var(--primary-light)", display: "grid", gap: 10 }}>
           <h3>Edit User: @{editingUser.username}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
-            <input className="input" value={editingUser.full_name} onChange={(e) => setEditingUser((p) => ({ ...p, full_name: e.target.value }))} required />
+            <input className="input" value={editingUser.full_name} onChange={(e) => setEditingUser((p) => ({ ...p, full_name: e.target.value.replace(/[^A-Za-z\s'-]/g, "") }))} required />
             <input className="input" value={editingUser.username} onChange={(e) => setEditingUser((p) => ({ ...p, username: e.target.value }))} required />
             <input className="input" type="email" value={editingUser.email} onChange={(e) => setEditingUser((p) => ({ ...p, email: e.target.value }))} required />
           </div>
