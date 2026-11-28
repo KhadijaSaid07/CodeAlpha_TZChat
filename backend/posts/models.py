@@ -20,10 +20,12 @@ class Post(models.Model):
 
     VISIBILITY_PUBLIC = "public"
     VISIBILITY_FRIENDS = "friends"
+    VISIBILITY_FOLLOWERS = "followers"
     VISIBILITY_PRIVATE = "private"
     VISIBILITY_CHOICES = [
         (VISIBILITY_PUBLIC, "Public"),
         (VISIBILITY_FRIENDS, "Friends"),
+        (VISIBILITY_FOLLOWERS, "Followers"),
         (VISIBILITY_PRIVATE, "Private"),
     ]
 
