@@ -37,6 +37,7 @@ class GroupSerializer(serializers.ModelSerializer):
     creator = GroupMemberUserSerializer(read_only=True)
     members_count = serializers.IntegerField(source="memberships.count", read_only=True)
     conversation_id = serializers.SerializerMethodField()
+    my_role = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
@@ -52,6 +53,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "allow_member_invites",
             "members_count",
             "conversation_id",
+            "my_role",
             "created_at",
             "updated_at",
         )
@@ -60,6 +62,13 @@ class GroupSerializer(serializers.ModelSerializer):
     def get_conversation_id(self, obj):
         conv = getattr(obj, "conversation", None)
         return conv.id if conv else None
+
+    def get_my_role(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        membership = obj.memberships.filter(user=request.user).first()
+        return membership.role if membership else None
 
 
 class GroupCreateUpdateSerializer(serializers.ModelSerializer):
