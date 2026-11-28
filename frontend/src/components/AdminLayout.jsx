@@ -282,15 +282,17 @@ export default function AdminLayout() {
             <span>⚙️</span>{!collapsed && <span>Admin Settings</span>}
           </NavLink>
 
-          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "8px 0" }} />
-          <button
-            type="button"
-            className="admin-nav-item"
-            onClick={handleAdminLogout}
-            style={{ background: "none", border: "none", textAlign: "left", width: "100%", color: "var(--danger)" }}
-          >
-            <span>🚪</span>{!collapsed && <span>Logout</span>}
-          </button>
+          <div className="sidebar-footer-push">
+            <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.14)", margin: "8px 0 6px" }} />
+            <button
+              type="button"
+              className="admin-nav-item"
+              onClick={handleAdminLogout}
+              style={{ background: "none", border: "none", textAlign: "left", width: "100%", color: "#fda4af" }}
+            >
+              <span>🚪</span>{!collapsed && <span>Logout</span>}
+            </button>
+          </div>
         </aside>
 
         <main style={{ minWidth: 0 }}>
