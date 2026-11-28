@@ -152,7 +152,7 @@ export default function GroupsPage() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
+    <div style={{ maxWidth: 820, width: "100%", margin: "0 auto", display: "grid", gap: 14, minWidth: 0 }}>
       {/* Top Bar: New Group + Join via Link */}
       <div className="card" style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
@@ -218,7 +218,7 @@ export default function GroupsPage() {
                     onChange={(e) => handleSelectImage(e.target.files?.[0])}
                   />
                 </label>
-                <div style={{ flex: 1, minWidth: 180, display: "grid", gap: 8 }}>
+                <div style={{ flex: "1 1 180px", minWidth: 0, display: "grid", gap: 8 }}>
                   <input
                     className="input"
                     placeholder="Group Name (required)"
@@ -226,11 +226,13 @@ export default function GroupsPage() {
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
-                  <input
-                    className="input"
+                  <textarea
+                    className="textarea"
+                    rows={2}
                     placeholder="Group Description (optional)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    style={{ minHeight: 58 }}
                   />
                 </div>
               </div>
@@ -301,14 +303,14 @@ export default function GroupsPage() {
         )}
 
         {/* Join via Invite Link or Code */}
-        <form onSubmit={handleJoinInvite} style={{ display: "flex", gap: 8 }}>
+        <form onSubmit={handleJoinInvite} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input
             className="input"
-            placeholder="Paste group invite link or code to join..."
+            placeholder="Paste group invite link or code..."
             value={inviteInput}
             onChange={(e) => setInviteInput(e.target.value)}
             required
-            style={{ minWidth: 0 }}
+            style={{ flex: "1 1 180px", minWidth: 0 }}
           />
           <button type="submit" className="btn btn-outline btn-sm" style={{ flexShrink: 0 }}>Join</button>
         </form>
@@ -347,10 +349,12 @@ export default function GroupsPage() {
                       {g.name?.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{g.name}</div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 700, overflowWrap: "anywhere", wordBreak: "break-word" }}>{g.name}</div>
                     {g.description && (
-                      <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: 2 }}>{g.description}</div>
+                      <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginTop: 2, overflowWrap: "anywhere", wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+                        {g.description}
+                      </div>
                     )}
                     <div style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 2 }}>
                       {g.members_count} participants
