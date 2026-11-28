@@ -1345,18 +1345,20 @@ select {
 
   .bottom-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -4px 18px rgba(20, 19, 42, 0.06);
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    z-index: 45;
+    background: linear-gradient(90deg, #161436 0%, #241b5c 55%, #321e6d 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(240, 171, 252, 0.28);
+    border-radius: 22px;
+    box-shadow: 0 12px 30px rgba(15, 13, 40, 0.34);
     display: flex;
     justify-content: space-around;
-    padding: 6px 4px calc(8px + env(safe-area-inset-bottom));
+    align-items: center;
+    padding: 6px 6px;
   }
 
   .bottom-nav a {
@@ -1364,35 +1366,47 @@ select {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 0.7rem;
-    color: var(--muted);
-    gap: 2px;
-    padding: 5px 10px;
-    border-radius: 12px;
-    min-width: 56px;
-    transition: background 0.15s ease, color 0.15s ease;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.74);
+    gap: 3px;
+    padding: 6px 10px;
+    border-radius: 15px;
+    border: 1px solid transparent;
+    min-width: 54px;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  }
+
+  .bottom-nav a:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(240, 171, 252, 0.38);
   }
 
   .bottom-nav a.active {
-    color: var(--primary);
-    background: var(--primary-light);
+    color: #ffffff;
+    background: var(--brand-gradient);
+    border-color: rgba(255, 255, 255, 0.35);
     font-weight: 700;
+    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.42);
+    transform: translateY(-2px);
   }
 
   .bottom-nav-dot {
     position: absolute;
-    top: 3px;
-    right: 10px;
+    top: 2px;
+    right: 8px;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
     border-radius: 999px;
-    background: var(--danger);
+    background: #ec4899;
     color: #ffffff;
-    font-size: 0.65rem;
+    font-size: 0.64rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border: 2px solid #241b5c;
   }
 }
