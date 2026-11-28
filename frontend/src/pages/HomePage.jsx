@@ -163,7 +163,8 @@ export default function HomePage() {
               >
                 <option value="public">Public</option>
                 <option value="friends">Friends</option>
-                <option value="private">Private</option>
+                <option value="followers">Followers</option>
+                <option value="private">Private (Only Me)</option>
               </select>
             </div>
 
