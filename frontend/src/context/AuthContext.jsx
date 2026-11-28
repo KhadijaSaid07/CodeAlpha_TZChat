@@ -9,12 +9,39 @@ import {
   setRefreshToken,
 } from "../api/client";
 
+const USER_CACHE_KEY = "tzchat_cached_user";
 const AuthContext = createContext(null);
 
+function readCachedUser() {
+  try {
+    if (!getAccessToken()) return null;
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedUser(u) {
+  try {
+    if (u) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u));
+    else localStorage.removeItem(USER_CACHE_KEY);
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cached = readCachedUser();
+  const [user, setUserState] = useState(cached);
+  // If we already have a cached user + token, render the dashboard immediately (no full-screen loader!)
+  const [loading, setLoading] = useState(!cached && Boolean(getAccessToken() || getRefreshToken()));
   const [avatarVersion, setAvatarVersion] = useState(() => Date.now());
+
+  function setUser(nextUser) {
+    setUserState(nextUser);
+    writeCachedUser(nextUser);
+  }
 
   function bumpAvatarVersion() {
     setAvatarVersion(Date.now());
@@ -28,8 +55,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     async function restoreSession() {
+      if (!getAccessToken() && !getRefreshToken()) {
+        setLoading(false);
+        return;
+      }
       try {
-        // First try existing persisted access token (avoids unnecessary refresh on reload)
         if (getAccessToken()) {
           try {
             const me = await apiRequest("/api/auth/me/");
