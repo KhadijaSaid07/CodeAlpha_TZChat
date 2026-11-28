@@ -535,16 +535,27 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "flex-start",
             gap: 10,
             padding: "12px 0",
             borderTop: "1px solid var(--border)",
             borderBottom: "1px solid var(--border)",
           }}
         >
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: "0.78rem", color: "var(--muted)" }}>Group description</div>
-            <div style={{ fontSize: "0.92rem", marginTop: 2, color: group.description ? "var(--text)" : "var(--primary)", fontWeight: group.description ? 500 : 600 }}>
+            <div
+              style={{
+                fontSize: "0.92rem",
+                marginTop: 4,
+                color: group.description ? "var(--text)" : "var(--primary)",
+                fontWeight: group.description ? 500 : 600,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
+                lineHeight: 1.45,
+              }}
+            >
               {group.description || "Add description"}
             </div>
           </div>
@@ -553,6 +564,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
               type="button"
               onClick={() => setView("edit")}
               className="btn btn-ghost btn-sm"
+              style={{ flexShrink: 0 }}
               title="Edit description"
             >
               ✏️
@@ -608,7 +620,7 @@ export default function GroupManagePanel({ group, onGroupUpdated, onLeftGroup, o
               readOnly
               value={inviteLink}
               onFocus={(e) => e.target.select()}
-              style={{ flex: 1, minWidth: 160, fontSize: "0.8rem" }}
+              style={{ flex: "1 1 160px", minWidth: 0, fontSize: "0.8rem" }}
             />
             <button
               type="button"
