@@ -20,6 +20,7 @@ export default function PostCard({ post, onDeleted }) {
   const [reporting, setReporting] = useState(false);
   const [reportReason, setReportReason] = useState("Inappropriate content");
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [lightboxVideo, setLightboxVideo] = useState(null);
 
   const isOwner = user?.id === post.author?.id;
   const postTypeLabel =
@@ -222,18 +223,99 @@ export default function PostCard({ post, onDeleted }) {
         </div>
       )}
 
-      {post.videos?.map((vid) => (
-        <div key={vid.id} style={{ marginBottom: 10 }}>
-          <video
-            src={apiUrl(vid.video)}
-            controls
-            playsInline
-            preload="metadata"
-            style={{ width: "100%", maxHeight: 420, borderRadius: 10, background: "#000" }}
-          />
-          {vid.caption && <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: 4 }}>{vid.caption}</p>}
+      {post.videos?.map((vid) => {
+        const videoUrl = apiUrl(vid.video);
+        return (
+          <div key={vid.id} style={{ marginBottom: 12 }}>
+            <div
+              style={{
+                borderRadius: 14,
+                overflow: "hidden",
+                background: "#09090f",
+                border: "1px solid var(--border)",
+                boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
+              }}
+            >
+              <video
+                src={videoUrl}
+                controls
+                playsInline
+                preload="metadata"
+                style={{
+                  width: "100%",
+                  maxHeight: 460,
+                  display: "block",
+                  objectFit: "contain",
+                  background: "#09090f",
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+              {vid.caption ? (
+                <p style={{ fontSize: "0.86rem", color: "var(--muted)", margin: 0 }}>{vid.caption}</p>
+              ) : (
+                <span />
+              )}
+              <div style={{ display: "flex", gap: 10, fontSize: "0.8rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setLightboxVideo({ url: videoUrl, caption: vid.caption })}
+                  style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: 600 }}
+                >
+                  🔍 Watch Fullscreen
+                </button>
+                <a
+                  href={videoUrl}
+                  download
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "var(--primary)", fontWeight: 600 }}
+                >
+                  ⬇ Download
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {lightboxVideo && (
+        <div className="modal-backdrop" onClick={() => setLightboxVideo(null)} style={{ zIndex: 120 }}>
+          <div style={{ position: "relative", maxWidth: "94vw", maxHeight: "90vh", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setLightboxVideo(null)}
+              style={{
+                position: "absolute",
+                top: -14,
+                right: -14,
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                border: "none",
+                background: "#14132a",
+                color: "#fff",
+                fontWeight: 700,
+                zIndex: 2,
+              }}
+            >
+              ✕
+            </button>
+            <video
+              src={lightboxVideo.url}
+              controls
+              autoPlay
+              playsInline
+              style={{ maxWidth: "92vw", maxHeight: "82vh", borderRadius: 14, background: "#000", display: "block", margin: "0 auto" }}
+            />
+            {lightboxVideo.caption && (
+              <div style={{ marginTop: 10, color: "#fff", fontSize: "0.92rem", background: "rgba(0,0,0,0.65)", padding: "6px 14px", borderRadius: 999, display: "inline-block" }}>
+                {lightboxVideo.caption}
+              </div>
+            )}
+          </div>
         </div>
-      ))}
+      )}
 
       <div style={{ display: "flex", gap: 16, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
         <button type="button" className="btn btn-ghost btn-sm" onClick={toggleLike} disabled={liking}>
