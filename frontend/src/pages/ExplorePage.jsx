@@ -70,18 +70,19 @@ export default function ExplorePage() {
   const hasMorePeople = users.length > visiblePeople;
 
   return (
-    <div style={{ maxWidth: 820, margin: "0 auto", display: "grid", gap: 16 }}>
+    <div style={{ maxWidth: 820, width: "100%", margin: "0 auto", display: "grid", gap: 14, minWidth: 0 }}>
       <div className="card">
         <h2 style={{ marginBottom: 10 }}>Explore TZChat</h2>
-        <form onSubmit={handleSearch} style={{ display: "flex", gap: 10 }}>
+        <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input
             className="input"
             type="search"
-            placeholder="Search people by name/username or public posts..."
+            placeholder="Search people or public posts..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            style={{ flex: "1 1 180px", minWidth: 0 }}
           />
-          <button type="submit" className="btn btn-primary">Search</button>
+          <button type="submit" className="btn btn-primary btn-sm" style={{ flexShrink: 0, padding: "10px 18px" }}>Search</button>
         </form>
       </div>
 
@@ -116,14 +117,21 @@ export default function ExplorePage() {
                         borderBottom: "1px solid var(--border)",
                       }}
                     >
-                      <Link to={`/profile/${u.username}`} style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit", minWidth: 0 }}>
+                      <Link
+                        to={`/profile/${u.username}`}
+                        style={{ display: "flex", alignItems: "center", gap: 10, color: "inherit", minWidth: 0, flex: "1 1 170px" }}
+                      >
                         <UserAvatar src={u.profile_picture_url} name={u.full_name} size={40} />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 600 }}>{u.full_name}</div>
-                          <div style={{ fontSize: "0.84rem", color: "var(--muted)" }}>@{u.username}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {u.full_name}
+                          </div>
+                          <div style={{ fontSize: "0.82rem", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            @{u.username}
+                          </div>
                         </div>
                       </Link>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
                         <FollowButton username={u.username} initialStatus={u.follow_status} />
                         <button type="button" className="btn btn-outline btn-sm" onClick={() => handleStartMessage(u.username)}>
                           Message
