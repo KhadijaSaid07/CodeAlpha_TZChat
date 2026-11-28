@@ -73,6 +73,8 @@ export default function ChatPage() {
   const [replyTo, setReplyTo] = useState(null);
   const [typingUser, setTypingUser] = useState("");
   const [lightboxMedia, setLightboxMedia] = useState(null); // { type: "image" | "video", url }
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
   const [error, setError] = useState("");
 
   // @mention autocomplete state
@@ -334,7 +336,33 @@ export default function ChatPage() {
     }
   }
 
+  function toggleSelectMsg(msgId) {
+    setSelectedMsgIds((prev) =>
+      prev.includes(msgId) ? prev.filter((x) => x !== msgId) : [...prev, msgId]
+    );
+  }
+
+  async function handleClearMessages(clearAll = false) {
+    if (!clearAll && selectedMsgIds.length === 0) return;
+    try {
+      const res = await apiRequest(`/api/messaging/conversations/${id}/clear/`, {
+        method: "POST",
+        body: JSON.stringify(clearAll ? {} : { message_ids: selectedMsgIds }),
+      });
+      const cleared = new Set(res?.cleared_ids || selectedMsgIds);
+      setMessages((prev) =>
+        prev.map((m) => (cleared.has(m.id) ? { ...m, is_deleted: true, content: "" } : m))
+      );
+      setSelectedMsgIds([]);
+      setSelectMode(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   const isGroup = conversation?.conversation_type === "group";
+  const isGroupAdmin =
+    isGroup && (groupInfo?.my_role === "owner" || groupInfo?.my_role === "admin");
   const otherUser =
     conversation?.conversation_type === "direct"
       ? conversation.participants?.find((p) => p.id !== user?.id) || conversation.participants?.[0]
@@ -420,25 +448,76 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {isGroup && groupInfo && (
-          <button
-            type="button"
-            onClick={() => setShowGroupPanel((v) => !v)}
-            style={{
-              background: showGroupPanel ? "#fff" : "rgba(255,255,255,0.2)",
-              color: showGroupPanel ? "var(--primary)" : "#fff",
-              border: "none",
-              padding: "6px 12px",
-              borderRadius: 20,
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {showGroupPanel ? "Chat" : "Group Info"}
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {!showGroupPanel && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectMode((v) => !v);
+                setSelectedMsgIds([]);
+              }}
+              style={{
+                background: selectMode ? "#fff" : "rgba(255,255,255,0.18)",
+                color: selectMode ? "var(--primary)" : "#fff",
+                border: "none",
+                padding: "6px 11px",
+                borderRadius: 20,
+                fontSize: "0.78rem",
+                fontWeight: 700,
+              }}
+            >
+              {selectMode ? "Done" : "Clear"}
+            </button>
+          )}
+          {isGroup && groupInfo && (
+            <button
+              type="button"
+              onClick={() => setShowGroupPanel((v) => !v)}
+              style={{
+                background: showGroupPanel ? "#fff" : "rgba(255,255,255,0.2)",
+                color: showGroupPanel ? "var(--primary)" : "#fff",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 20,
+                fontSize: "0.8rem",
+                fontWeight: 700,
+              }}
+            >
+              {showGroupPanel ? "Chat" : "Group Info"}
+            </button>
+          )}
+        </div>
       </div>
+
+      {selectMode && !showGroupPanel && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 8,
+            padding: "8px 14px",
+            background: "#eef0ff",
+            borderBottom: "1px solid var(--border)",
+            fontSize: "0.84rem",
+          }}
+        >
+          <span style={{ fontWeight: 600, color: "var(--text)" }}>
+            {selectedMsgIds.length > 0 ? `${selectedMsgIds.length} selected` : "Tap messages to clear"}
+          </span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {selectedMsgIds.length > 0 && (
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => handleClearMessages(false)}>
+                Clear Selected ({selectedMsgIds.length})
+              </button>
+            )}
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => handleClearMessages(true)}>
+              Clear All
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-error" style={{ margin: "8px 12px 0" }}>
@@ -483,6 +562,8 @@ export default function ChatPage() {
             {messages.map((m) => {
               const senderId = m.sender?.id ?? m.sender_id;
               const isMe = senderId === user?.id;
+              const canDelete = (isMe || isGroupAdmin) && !m.is_deleted;
+              const isSelected = selectedMsgIds.includes(m.id);
               const quoted = m.reply_to ? messages.find((x) => x.id === m.reply_to) : null;
               const senderAccent = getSenderColor(senderId);
 
@@ -497,6 +578,14 @@ export default function ChatPage() {
                     maxWidth: "82%",
                   }}
                 >
+                  {selectMode && canDelete && (
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelectMsg(m.id)}
+                      style={{ width: 17, height: 17, accentColor: "var(--primary)", alignSelf: "center", flexShrink: 0 }}
+                    />
+                  )}
                   {!isMe && (
                     <UserAvatar
                       src={m.sender?.profile_picture_url}
@@ -747,7 +836,7 @@ export default function ChatPage() {
                         >
                           Reply
                         </button>
-                        {isMe && !m.is_deleted && (
+                        {canDelete && (
                           <button
                             type="button"
                             onClick={() => handleDeleteMessage(m.id)}
@@ -888,7 +977,7 @@ export default function ChatPage() {
                 ref={inputRef}
                 className="input"
                 type="text"
-                placeholder={voiceFile ? "Optional caption for voice note..." : "Message (type @ to tag someone)"}
+                placeholder={voiceFile ? "Optional caption for voice note..." : "Type a message..."}
                 value={text}
                 onChange={(e) => handleTyping(e.target.value)}
                 style={{ flex: 1, minWidth: 0, borderRadius: 24, padding: "10px 16px" }}
