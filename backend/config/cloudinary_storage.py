@@ -1,6 +1,6 @@
 """
 Lightweight Django 5 Storage backend using the official Cloudinary SDK.
-Supports images, videos, voice notes (audio), and raw files via resource_type='auto'.
+Supports images, videos, voice notes (audio), and documents (PDF, Word, Excel, PowerPoint, etc.).
 Stores compact references (< 50 chars) so every Django FileField/ImageField (max_length=100)
 works without database migrations.
 """
@@ -20,15 +20,34 @@ RESOURCE_PREFIX = {
 }
 PREFIX_TO_RESOURCE = {v: k for k, v in RESOURCE_PREFIX.items()}
 
+RAW_DOC_EXTS = {
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".txt", ".csv", ".zip", ".rar", ".rtf", ".odt", ".ods", ".odp",
+}
+
 
 class CloudinaryMediaStorage(Storage):
-    """Stores uploaded media permanently on Cloudinary using resource_type='auto'."""
+    """Stores uploaded media and documents permanently on Cloudinary."""
 
     def _save(self, name, content):
         if hasattr(content, "seek"):
             content.seek(0)
 
-        short_id = uuid.uuid4().hex[:16]
+        ext = os.path.splitext(name)[1].lower()
+        short_id = uuid.uuid4().hex[:14]
+
+        # Preserve file extension for documents (Word, Excel, PowerPoint, PDF, etc.) using raw resource_type
+        if ext in RAW_DOC_EXTS:
+            result = cloudinary.uploader.upload(
+                content,
+                folder="tzchat",
+                public_id=f"{short_id}{ext}",
+                resource_type="raw",
+                overwrite=True,
+                unique_filename=False,
+            )
+            return f"r:{result['public_id']}"
+
         result = cloudinary.uploader.upload(
             content,
             folder="tzchat",
@@ -42,7 +61,6 @@ class CloudinaryMediaStorage(Storage):
         fmt = result.get("format", "")
         prefix = RESOURCE_PREFIX.get(res_type, "i:")
         suffix = f".{fmt}" if fmt and not public_id.endswith(f".{fmt}") else ""
-        # Example: "i:tzchat/8b7413b2286745eb.jpg" (~30 chars, always fits VARCHAR(100))
         return f"{prefix}{public_id}{suffix}"
 
     def url(self, name):
