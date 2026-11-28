@@ -56,8 +56,22 @@ class RegisterSerializer(serializers.ModelSerializer):
             "confirm_password",
         )
 
+    def validate_full_name(self, value):
+        import re
+
+        cleaned = " ".join(value.strip().split())
+        if len(cleaned) < 2:
+            raise serializers.ValidationError("Full name must be at least 2 characters.")
+        if not re.match(r"^[A-Za-z][A-Za-z\s'-]*$", cleaned):
+            raise serializers.ValidationError("Full name can only contain letters, spaces, hyphens, or apostrophes (no numbers).")
+        return cleaned
+
     def validate_username(self, value):
+        import re
+
         cleaned = value.strip().lower()
+        if not re.match(r"^[a-z][a-z0-9_]{2,29}$", cleaned):
+            raise serializers.ValidationError("Username must be 3-30 characters, start with a letter, and use only letters, numbers, or underscores.")
         if User.objects.filter(username=cleaned).exists():
             raise serializers.ValidationError("This username is already taken.")
         return cleaned
