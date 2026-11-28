@@ -12,6 +12,12 @@ function formatDuration(sec) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+const SENDER_COLORS = ["#4f46e5", "#0d9488", "#d97706", "#db2777", "#2563eb", "#7c3aed"];
+function getSenderColor(senderId) {
+  const idx = Math.abs(Number(senderId) || 0) % SENDER_COLORS.length;
+  return SENDER_COLORS[idx];
+}
+
 export default function ChatPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -393,6 +399,7 @@ export default function ChatPage() {
               const senderId = m.sender?.id ?? m.sender_id;
               const isMe = senderId === user?.id;
               const quoted = m.reply_to ? messages.find((x) => x.id === m.reply_to) : null;
+              const senderAccent = getSenderColor(senderId);
               return (
                 <div
                   key={m.id}
@@ -404,30 +411,38 @@ export default function ChatPage() {
                     maxWidth: "84%",
                   }}
                 >
-                  {!isMe && isGroup && (
+                  {!isMe && (
                     <UserAvatar
                       src={m.sender?.profile_picture_url}
                       name={m.sender?.full_name || m.sender?.username || "U"}
-                      size={28}
+                      size={30}
                     />
                   )}
                   <div
                     style={{
-                      background: isMe ? "var(--primary)" : "#ffffff",
+                      background: isMe ? "var(--brand-gradient)" : "#ffffff",
                       color: isMe ? "#fff" : "var(--text)",
-                      padding: "9px 13px",
-                      borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      boxShadow: "0 1px 2px rgba(15,23,42,0.08)",
+                      padding: "10px 14px",
+                      borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                      border: isMe ? "none" : "1px solid var(--border)",
+                      boxShadow: isMe
+                        ? "0 4px 14px rgba(79, 70, 229, 0.22)"
+                        : "0 2px 6px rgba(20, 19, 42, 0.06)",
                       overflowWrap: "anywhere",
                       wordBreak: "break-word",
-                      minWidth: 90,
+                      minWidth: 110,
                     }}
                   >
-                    {!isMe && isGroup && (
-                      <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--primary)", marginBottom: 3 }}>
-                        {m.sender?.full_name || `@${m.sender?.username || m.sender_username}`}
-                      </div>
-                    )}
+                    <div
+                      style={{
+                        fontSize: "0.73rem",
+                        fontWeight: 700,
+                        color: isMe ? "rgba(255,255,255,0.85)" : senderAccent,
+                        marginBottom: 3,
+                      }}
+                    >
+                      {isMe ? "You" : m.sender?.full_name || `@${m.sender?.username || m.sender_username}`}
+                    </div>
                     {m.reply_to && (
                       <div
                         style={{
