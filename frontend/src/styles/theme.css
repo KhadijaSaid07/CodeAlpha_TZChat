@@ -810,8 +810,9 @@ select {
 
 .sidebar {
   position: sticky;
-  top: 74px;
-  height: fit-content;
+  top: 72px;
+  height: calc(100dvh - 88px);
+  overflow-y: auto;
   background: linear-gradient(180deg, #161436 0%, #221b54 100%);
   border: 1.5px solid rgba(240, 171, 252, 0.2);
   border-radius: 20px;
@@ -823,10 +824,16 @@ select {
   color: #ffffff;
 }
 
+.sidebar-footer-push {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
 .admin-sidebar {
   position: sticky;
-  top: 74px;
-  height: fit-content;
+  top: 72px;
+  height: calc(100dvh - 88px);
+  overflow-y: auto;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   border: 1.5px solid rgba(56, 189, 248, 0.22);
   border-radius: 20px;
